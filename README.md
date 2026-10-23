@@ -30,9 +30,9 @@ length the cost formula gives.
 | entry | method | networks | pipeline baseline |
 | --- | --- | --- | --- |
 | 1, `LinearMaxK/` | an exact test for each group of inputs with the same largest token | linear max-of-k, every `k`, `V`, `d` | 03, contract and interval, for every `k` |
-| 2, `BruteForce/` | one forward pass on every input | every network and task | 01, brute force |
+| 2, `BruteForce/` | one forward pass on every input | every network and task (see the note in entry 2) | 01, brute force |
 | 3, `LinearMaxKPlans/` | entry 1's test on chosen pieces of groups | linear max-of-k, every `k`, `V`, `d` | 03 with splitting, 04 with a budget |
-| 4, `Symmetry/` | one forward pass per sorted input, weighted by its reorderings | every network that sums its input over the positions first | 02, symmetry |
+| 4, `Symmetry/` | one forward pass per sorted input, weighted by its reorderings | networks that sum their input over the positions first (see the note in entry 2) | 02, symmetry |
 
 ## Entry 1: linear max-of-k (`LinearMaxK/`)
 
@@ -105,7 +105,8 @@ either, while brute force (entry 2) grows as `V^k`.
 | `max2-v64`, 5 other development seeds | 2 | 64 | 8 | 4,095 or 4,092 | the same | 307,728 | 308,816 | 2,683,968 |
 | `max2-v128`, 6 development seeds | 2 | 128 | 16 | 16,383 | 16,383 | 2,427,040 | 2,431,392 | 40,358,144 |
 
-* What is proved: everything in the first two rows. They are kernel-checked instances
+* What is proved: in the first two rows, the certified count (the instance's target, at least
+  that many inputs correct), the bill and the length. They are kernel-checked instances
   (`instances/LinearMaxKInstances/`), and the acceptance service accepted and scored both; the
   receipts are in `instances/receipts/LinearMaxK/`. For the other rows, the bill and the length
   (they follow from `check_billed` and `bill_eq` for every well-formed network of these sizes),
@@ -114,23 +115,25 @@ either, while brute force (entry 2) grows as `V^k`.
   extracting the weights. The brute force column is entry 2's length on the same network,
   `V^k (k d + d² + d V + V - 1)` plus the same extraction. (The zoo's `B` for these networks,
   2,696,387 and 40,407,555, is defined a little differently.)
-* `correct` is the zoo's exact count of correct inputs. On every development network the checker
-  certifies all of them: the inputs these networks get wrong fill whole groups (the group of the token
-  0, or the groups of the tokens 0 and 1).
+* `correct` is the zoo's exact count of correct inputs, computed outside Lean. On every development
+  network the checker certifies all of them: the inputs these networks get wrong fill whole groups
+  (the group of the token 0, or the groups of the tokens 0 and 1). Exactness (`check_billed`) says
+  the same in Lean, but no instance states the upper bound as a theorem.
 * The receipts' description size is 4,285, of a budget of 8,512 for the tiny network and 12,544 for
   `max2-v64-s0`.
 
 ### Large instances
 
-The kernel cannot evaluate the checker on a `V = 64` network in one `decide`: the 300,000 charged
-operations, in exact rational arithmetic, run out of memory. `Table.lean` splits the evaluation into
+The kernel cannot evaluate the checker on a `V = 64` network in one `decide`: the checker's 307,728
+charged operations, in exact rational arithmetic, ran out of memory at 8 GB. `Table.lean` splits the evaluation into
 small statements. The weights of an exported network are integers times a power of two, one exponent
 per tensor, so `M = 2^e · MZ` for the integer matrix `MZ` of the mantissas, and every test has the
 same outcome on `MZ` as on `M`. An instance then proves, each by its own `decide`, one theorem per row
-of `MZ`, one per group's tests, and one for the guard, and `check_billed_of_table` assembles them.
-`scripts/make_table_instance.py` writes such an instance for any network of the family. The one for
+of `MZ`, one per group's tests, and one for the guard (checked on the table too), and
+`check_billed_of_table` assembles them. `scripts/make_table_instance.py` writes such an instance for
+any network of the family that answers the guard input correctly. The one for
 `max2-v64-s0` compiles in about 4 minutes and 3 GB, one theorem at a time to stay within the
-acceptance service's 12 GB; the service replays it in 3.6 minutes.
+acceptance service's 12 GB; the service replays it in about 3.5 minutes.
 
 ## Entry 2: brute force (`BruteForce/`)
 
@@ -149,9 +152,10 @@ written once for every graph and every task, and every other entry is measured a
 * `check_billed_maxK` (`MaxK.lean`): on the linear max-of-k family with well-formed weights, the count
   is exactly `numCorrect` and the bill is `V^k (k d + d² + d V + V - 1)`.
 
-On networks beyond linear maps the single-input rule encloses `exp` and `softmax` in rational bounds
-instead of computing them, so it could miss an input answered correctly by a tiny margin; the count
-stays sound.
+A note on which networks: soundness holds for every graph, but at the pinned CompactCheck a forward
+pass can be billed only on graphs of `input`, `sum`, `linear` and `add` nodes (`singleCost`). On
+any other network, attention networks among them, the run fails and certifies nothing. The same
+holds for entry 4.
 
 ### Instances
 
@@ -183,9 +187,10 @@ piece has `lo ≤ hi ≤ m < V`, and two pieces of one group have disjoint range
 certifies nothing.
 
 The pipeline's other max-of-2 baselines are plans. Baseline 03 with its knob splits a group that
-holds a wrong input into bands, until the wrong inputs are isolated. Baseline 04 spends a budget:
-whole groups from the largest token down, then one tail of the next group. The plan of all whole
-groups is entry 1.
+holds a wrong input into pieces (bands, and a tail at the top), down to a depth the knob sets; at
+knob 1 the wrong inputs are isolated. Baseline 04 spends a budget: whole groups from the largest
+token down, then one tail of the next group. The plan of all whole groups is entry 1, at one
+operation more (`check_groups`).
 
 ### The theorems
 
@@ -194,14 +199,14 @@ groups is entry 1.
 * `check_billed` (`Exact.lean`): on well-formed weights and a valid plan, the count is the sum of
   the sizes of the pieces whose tests pass, if the guard input is answered correctly, and the bill is
   `billPlan k V d plan`.
-* `pieceOk_iff`: for a tail, or for a band when `k = 2`, the tests pass iff the network answers every
-  input of the piece correctly. For `k > 2` the test of a band is sufficient only.
-* `countP_mem` (`Pieces.lean`): a piece has `tailSize k m lo - tailSize k m (hi + 1)` inputs, where
-  `tailSize k m a = (m + 1 - a)^k - (m - a)^k`.
-* `billPlan`: the guard and the columns as in entry 1, two literals, and for each piece
-  `(V - 1) (c + 1) + 1`, with `c = 2 (m - lo) + 3` for a tail and `2 (m - lo) + 4` for a band.
-* `planOk_groups`, `billPlan_groups`: the plan of all whole groups is valid, and its bill is entry
-  1's plus one.
+* `pieceOk_iff`: on well-formed weights, for a valid piece, when `k ≥ 2` or the piece is a tail,
+  the tests pass iff the network answers every input of the piece correctly. The tests are exact.
+* `countP_mem` (`Pieces.lean`): for `k ≥ 1`, a valid piece has `tailSize k m lo - tailSize k m (hi + 1)`
+  inputs, where `tailSize k m a = (m + 1 - a)^k - (m - a)^k`.
+* `billPlan` (`Runs.lean`): the guard and the columns as in entry 1, two literals, and for each
+  piece `(V - 1) (c + 1) + 1`, with `c = 2 (m - lo) + 3` for a tail and `2 (m - lo) + 4` for a band.
+* `check_groups` (`Exact.lean`): on well-formed weights, the plan of all whole groups has entry 1's
+  count, and entry 1's bill plus one.
 
 ### Instances
 
@@ -224,11 +229,12 @@ passes with its number of reorderings, `mult V k x`.
 
 ### The theorems
 
-* `check_sound` (`Checker.lean`): for every such network, every such task on `k` positions of `V`
-  tokens, all weights and all certificates, the count is at most `numCorrect`.
-* `check_billed`: when a forward pass can be billed, at `s` operations, the count is the number of
-  inputs the single-input rule passes, as for brute force, and the bill is
-  `(V + k - 1).choose k · s`.
+* `check_sound` (`Checker.lean`): for every such network, every such task whose input space is
+  `k ≥ 1` positions of `V` tokens, all weights and all certificates, the count is at most
+  `numCorrect`.
+* `check_billed`: for the same networks and tasks, when a forward pass can be billed, at `s`
+  operations, the count is the number of inputs the single-input rule passes, as for brute force,
+  and the bill is `(V + k - 1).choose k · s`.
 * `check_billed_maxK` (`MaxK.lean`): on the linear max-of-k family with well-formed weights, the count
   is exactly `numCorrect` and the bill is `(V + k - 1).choose k · (k d + d² + d V + V - 1)`.
 * `countP_perm`, `length_sortedFrom` (`Sorted.lean`): `mult V k x` is the number of reorderings of
@@ -306,6 +312,13 @@ with the checker's own reader.
 
 ## Next
 
+* A proof shorter than the hand-written one: the decoupled column test the agent found in the
+  open-lane pilot (a group passes if `dm_m + (k - 1) · min_{t ≤ m} (M[m,t] - top_t) > 0`, with
+  `top_t` the largest entry of column `t` and `dm_m` the diagonal margin of column `m`), sufficient
+  only, with entry 1's exact test on the groups where it fails.
+* Gross et al.'s hand-written proofs for the attention max-of-k transformer, which need the counted
+  language's bounds on `exp` and `softmax`.
 * Kernel-checked instances of entry 1 for the other development seeds and for `V = 128`, with
-  `scripts/make_table_instance.py` (at `V = 128` the kernel's work is about 30 times larger).
+  `scripts/make_table_instance.py` (at `V = 128` the table is four times larger and, by a count of
+  operations, the kernel's work about ten times; not measured).
 * Networks with `k = 3, 4`: apart from the guard, entry 1's cost does not grow with `k`.

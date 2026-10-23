@@ -130,8 +130,9 @@ def pairOkZ (rows : List (List ℤ)) (k m j : ℕ) : Bool :=
 def groupOkZ (rows : List (List ℤ)) (k V m : ℕ) : Bool :=
   (List.range V).all fun j => decide (j = m) || pairOkZ rows k m j
 
-/-- The guard's test on a table of rows: the input `(V - 1, ..., V - 1)` is answered correctly iff
-    column `V - 1` is largest in row `V - 1`. -/
+/-- The guard's test on a table of rows: in column `V - 1`, the entry of row `V - 1` is larger than
+    every other row's. Then the input `(V - 1, ..., V - 1)`, whose logits are `k` times column
+    `V - 1`, is answered correctly (`guard_correct`). -/
 def guardOkZ (rows : List (List ℤ)) (V : ℕ) : Bool :=
   (List.range V).all fun j => decide (j = V - 1) ||
     decide ((rows.getD j []).getD (V - 1) 0 < (rows.getD (V - 1) []).getD (V - 1) 0)

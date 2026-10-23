@@ -26,49 +26,49 @@
    "step": "compile",
    "module": "Candidate.Common.Basic",
    "rc": 0,
-   "seconds": 2.3,
+   "seconds": 2.5,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Family",
    "rc": 0,
-   "seconds": 3.1,
+   "seconds": 3.0,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Checker",
    "rc": 0,
-   "seconds": 2.0,
+   "seconds": 2.2,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Groups",
    "rc": 0,
-   "seconds": 2.3,
+   "seconds": 2.8,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Runs",
    "rc": 0,
-   "seconds": 4.2,
+   "seconds": 4.6,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Sound",
    "rc": 0,
-   "seconds": 2.4,
+   "seconds": 2.5,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Exact",
    "rc": 0,
-   "seconds": 2.5,
+   "seconds": 2.4,
    "timed_out": false
   },
   {
@@ -82,25 +82,25 @@
    "step": "compile",
    "module": "Candidate.LinearMaxKMax2V64S0",
    "rc": 0,
-   "seconds": 247.8,
+   "seconds": 253.2,
    "timed_out": false
   },
   {
    "step": "kernel",
    "rc": 0,
-   "seconds": 219.5,
+   "seconds": 212.6,
    "timed_out": false
   },
   {
    "step": "closure",
    "rc": 0,
-   "seconds": 1.5,
+   "seconds": 1.3,
    "timed_out": false
   },
   {
    "step": "score",
    "rc": 0,
-   "seconds": 219.9,
+   "seconds": 211.4,
    "timed_out": false
   }
  ],
@@ -118,7 +118,7 @@
    "Candidate.LinearMaxK.Groups": "f7cc2fd139b9ce34d616f4afa77fdc2c89abe6530c8822dcfb49aa9813f63b1e",
    "Candidate.LinearMaxK.Runs": "7e5ba8a63f1df5f924903e8b49149f198473898490a912041fadfe73831f1487",
    "Candidate.LinearMaxK.Sound": "908ed0b0750683448cca3a7c2e2ac5273a00af38d651c0686232b9c41668aebf",
-   "Candidate.LinearMaxK.Table": "4a6a967bfc29f1b6c89e352642b151f9979e24059bfdcc1fb4b8f555c2e809b1",
+   "Candidate.LinearMaxK.Table": "dd267aa7fc42bc7f2adcea3f425aa63b30e179038c77d20c5db832e6c7e51e54",
    "Candidate.LinearMaxKMax2V64S0": "16b986b65b83339fbe6d358a4f575e98ac54f6e9fc9c7f122478a0f5283bd421"
   },
   "network_file": "ff1a5473c5d13410e64783307ca2e77ed91ecc3adebbf7862f96fd9df1b3d1fd"
@@ -137,9 +137,9 @@
   "length": 308816,
   "description_size": 4285,
   "size_budget": 12544,
-  "general_kernel_ms": 509,
+  "general_kernel_ms": 537,
   "general_kernel_budget_ms": 120000,
-  "rest_kernel_ms": 217111,
+  "rest_kernel_ms": 208588,
   "axioms": [
    "propext",
    "Classical.choice",
@@ -149,7 +149,7 @@
   "general_constants": 230,
   "checker_constants": 26
  },
- "seconds": 713.1,
- "time": "2026-10-23T10:31:45+0100",
+ "seconds": 704.4,
+ "time": "2026-10-23T11:22:48+0100",
  "replayed_constants": 786
 }
