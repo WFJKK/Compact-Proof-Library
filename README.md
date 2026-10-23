@@ -33,6 +33,7 @@ length the cost formula gives.
 | 2, `BruteForce/` | one forward pass on every input | every network and task (see the note in entry 2) | 01, brute force |
 | 3, `LinearMaxKPlans/` | entry 1's test on chosen pieces of groups | linear max-of-k, every `k`, `V`, `d` | 03 with splitting, 04 with a budget |
 | 4, `Symmetry/` | one forward pass per sorted input, weighted by its reorderings | networks that sum their input over the positions first (see the note in entry 2) | 02, symmetry |
+| 5, `LinearMaxKColumnMax/` | tests on column maxima of `M`, against all outputs at once | linear max-of-k, every `k`, `V`, `d` | none: an agent's open-lane proof (`Full64`), generalised |
 
 ## Entry 1: linear max-of-k (`LinearMaxK/`)
 
@@ -246,6 +247,91 @@ The receipt is in `instances/receipts/Symmetry/`: description size 917 of a budg
 `max2-v64` network the bill is 2,080 forward passes, 1,362,400 (length 1,363,488): about half of
 brute force, as the pipeline's baseline 02 predicts.
 
+## Entry 5: column maxima (`LinearMaxKColumnMax/`)
+
+### The method
+
+The method of `Full64`, the proof an agent found in the open lane for the tiny network (pilot 2,
+round 4), written for every `k`, `V`, `d` and every plan. Entry 1 tests each group against every
+other output `j`, one test per `j`. Here each column `t` of `M` is summarised once:
+
+| summary | value |
+| --- | --- |
+| `mx_t` | `max_{j ≠ t} M[j, t]`, the largest entry off the diagonal |
+| `top_t` | `max (mx_t, M[t, t])`, the largest entry |
+| `dm_t` | `M[t, t] - mx_t`, the margin of the diagonal |
+
+No output gains more from token `t` than `top_t`, and no output other than `t` gains more than
+`mx_t`. So one test of the summaries bounds the margins against all `j` at once.
+
+A plan is a list of terms. Each certifies a set of inputs closed under reordering, given as a list of
+sorted inputs, and counts their reorderings if its test passes. For inputs whose largest token is
+`m`:
+
+* `diag m`, the input `(m, ..., m)`: `0 < dm_m`.
+* `box m lo hi dg`, the inputs whose other tokens all lie in `[lo, hi]`, with `hi < m`, and
+  `(m, ..., m)` too if `dg`. With the loss `ℓ(t) = top_t - M[m, t]`, the test is
+
+      (k - 1) · max_{lo ≤ t ≤ hi} ℓ(t) < dm_m
+
+* `refined x`, the reorderings of the sorted input `x`, which holds `m` `c` times. Against every `j`
+  that is not a token of `x`,
+
+      Σ_{t ∈ x, t ≠ m} (mx_t - M[m, t]) < c · dm_m
+
+  and against each other token `j` of `x`, its exact margin.
+* `exact x`: the logits of `x`, the sum of the columns of its tokens, and one comparison of logit
+  `m` with the largest of the others.
+
+For `k = 2` these are `Full64`'s four tests: its `pair a m` is `box m a a`, its `rpair a m` is
+`refined [a, m]`, its `exact a m` is `exact [a, m]`. The tests are sufficient, not exact: a box can
+fail where every input is answered correctly, and then a refined or an exact test can take over.
+
+The plan is public data, fixed with the checker. The checker checks it first: a box has
+`lo ≤ hi < m < V`, the terms' sorted inputs are sorted inputs of the task, and none of them is in two
+terms. For an invalid plan it certifies nothing.
+
+### The theorems
+
+* `check_sound` (`Sound.lean`): for every graph of the family, every plan, all weights and all
+  certificates, the count is at most `numCorrect`.
+* `check_billed`: on well-formed weights and a valid plan, the count is the sum of the sizes of the
+  terms whose tests pass, and the bill is `billPlan V k d plan`:
+
+  | part | operations |
+  | --- | --- |
+  | the columns of `M` | `V (d² + V d)` |
+  | their summaries | `V ((V - 2) + 2)` |
+  | `diag m` | `1` |
+  | `box m lo hi dg` | `2 (hi - lo) + (k - 2) + 2` |
+  | `refined x` | `(2n - 1) + (c - 1) + 1 + u ((2n - 1) + (c - 1) + 3)`, with `n` tokens other than `m`, `u` of them distinct |
+  | `exact x` | `(k - 1) V + (V - 2) + 1` |
+
+  For `k = 2`: a box costs 2 per token of `[lo, hi]`, `refined [a, m]` costs 6, `exact [a, m]`
+  costs `2V - 1`.
+
+### Instances
+
+| network | plan | certified | bill | length | checked by |
+| --- | --- | --- | --- | --- | --- |
+| `max2_tiny-v8-s0` | `Full64`'s | 64 | 581 | 661 | kernel; accepted and scored |
+
+The plan is `Full64`'s, term for term: 2 diagonal tests, 16 boxes, 9 refined tests and 3 exact
+tests. `Full64` certified the inputs `(6, 7)` and `(7, 6)` with the forward pass it ran to bound the
+weights' lengths; under policy v4 the lengths are free, and `exact [6, 7]` certifies them. The
+receipt is in `instances/receipts/LinearMaxKColumnMax/`: description size 7,404 of a budget of
+8,512 (`Full64`'s own, written for this network only, was 7,502).
+
+On the same network entry 1 certifies the same 64 inputs for a bill of 1,001 (length 1,081): entry 5
+is 39% shorter, with every operation charged as entry 1's are. The gain is in the method, not in the
+accounting: a pair costs one comparison against the column summaries instead of one per wrong
+output. It also grows with `V`. On `max2-v64-s0`, the cheapest passing term for each input (766
+boxes, 594 refined tests, 656 exact tests and one diagonal test; the other diagonal inputs come with
+boxes) certifies 4,095 inputs, entry 1's count, for a bill of 129,369 (length 130,457) against entry
+1's 307,009 (308,097). That is a measurement: `scripts/column_max_plan.py` writes the plan and a Lean
+file that runs the checker on the network with `#eval`; no kernel-checked instance yet. On the tiny
+network the same script writes a plan of the same bill as `Full64`'s, 581.
+
 ## Layout
 
 | file | what it is |
@@ -268,10 +354,14 @@ brute force, as the pipeline's baseline 02 predicts.
 | `Symmetry/Sorted.lean` | sorted inputs, how many there are, and the reorderings of an input |
 | `Symmetry/Checker.lean` | entry 4's checker, its soundness, its count and its bill |
 | `Symmetry/MaxK.lean` | symmetry on the linear max-of-k family: exact, and its bill |
+| `LinearMaxKColumnMax/Checker.lean` | entry 5's plans and checker |
+| `LinearMaxKColumnMax/Runs.lean` | what it computes, and what it costs |
+| `LinearMaxKColumnMax/Sound.lean` | soundness, and the count and the bill |
 | `instances/` | protected modules, instances, network files, receipts |
 | `Measure.lean` | `lake exe measure`: entry 1's checker on exported networks, compiled |
 | `scripts/make_candidate.py` | packages an instance for the acceptance service |
 | `scripts/make_table_instance.py` | writes a kernel-checked instance of entry 1 for a large network |
+| `scripts/column_max_plan.py` | writes entry 5's plan for a max-of-2 network, and runs the checker on it |
 
 ## Build
 
@@ -308,12 +398,12 @@ with the checker's own reader.
 
 ## Next
 
-* A proof shorter than the hand-written one: the decoupled column test the agent found in the
-  open-lane pilot (`Full64`: a pair passes if `top_a - M[m,a] < dm_m`, with `top_a` the largest
-  entry of column `a` and `dm_m` the diagonal margin of column `m`), for every `k`, `V`, `d`.
+* Kernel-checked instances of entry 5 at `V = 64`, with the plan `scripts/column_max_plan.py`
+  writes and the tests evaluated on the integer table, as entry 1's large instances do.
 * Gross et al.'s hand-written proofs for the attention max-of-k transformer, which need the counted
   language's bounds on `exp` and `softmax`.
 * Kernel-checked instances of entry 1 for the other development seeds and for `V = 128`, with
   `scripts/make_table_instance.py` (at `V = 128` the table is four times larger and, by a count of
   operations, the kernel's work about ten times; not measured).
-* Networks with `k = 3, 4`: entry 1's cost does not grow with `k`.
+* Networks with `k = 3, 4`: entry 1's cost does not grow with `k`, and an entry 5 box covers all
+  the inputs of a group whose other tokens lie in its range with one test.

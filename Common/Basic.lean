@@ -231,4 +231,40 @@ theorem runs_single {g : Graph} {task : Task} {x : Input} {sc : ℕ}
 
 end Ops
 
+/-! ## Folds and maps of counted steps -/
+
+section Folds
+
+variable {env : Env} {α β : Type}
+
+/-- A fold of counted steps: the steps' values folded, and their costs added. -/
+theorem runs_foldlM {f : β → α → Interp.counting.M β} {g : β → α → β} {c : α → ℕ} :
+    ∀ (l : List α) (b : β), (∀ b, ∀ a ∈ l, Runs (f b a) env (g b a) (c a)) →
+      Runs (@List.foldlM Interp.counting.M (instMonadInterp Interp.counting) β α f b l) env
+        (l.foldl g b) (l.map c).sum
+  | [], b, _ => (Runs.pure b).congr rfl (by simp)
+  | a :: l, b, h => by
+    simp only [List.foldlM_cons, Interp.counting_bind]
+    exact Runs.bind' (h b a List.mem_cons_self)
+      (runs_foldlM l _ fun b' a' ha' => h b' a' (List.mem_cons_of_mem _ ha')) rfl (by simp)
+
+theorem runs_mapM_loop {f : α → Interp.counting.M β} {g : α → β} {c : α → ℕ} :
+    ∀ (l : List α) (bs : List β), (∀ a ∈ l, Runs (f a) env (g a) (c a)) →
+      Runs (@List.mapM.loop Interp.counting.M (instMonadInterp Interp.counting) α β f l bs) env
+        (bs.reverse ++ l.map g) (l.map c).sum
+  | [], bs, _ => (Runs.pure _).congr (by simp) (by simp)
+  | a :: l, bs, h => by
+    simp only [List.mapM.loop, Interp.counting_bind]
+    exact Runs.bind' (h a List.mem_cons_self)
+      (runs_mapM_loop l _ fun a' ha' => h a' (List.mem_cons_of_mem _ ha')) (by simp) (by simp)
+
+/-- A map of counted steps: their values, and their costs added. -/
+theorem runs_mapM {f : α → Interp.counting.M β} {g : α → β} {c : α → ℕ} (l : List α)
+    (h : ∀ a ∈ l, Runs (f a) env (g a) (c a)) :
+    Runs (@List.mapM Interp.counting.M (instMonadInterp Interp.counting) α β f l) env (l.map g)
+      (l.map c).sum :=
+  (runs_mapM_loop l [] h).congr (by simp) rfl
+
+end Folds
+
 end Common
