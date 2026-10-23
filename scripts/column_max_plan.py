@@ -74,7 +74,7 @@ import LinearMaxKColumnMax.Sound
 
 open CompactCheck LinearMaxKColumnMax
 
-def plan : List Term :=
+def plan : List LinearMaxKColumnMax.Term :=
   [{(","+chr(10)+"   ").join(terms)}]
 
 def main : IO Unit := do

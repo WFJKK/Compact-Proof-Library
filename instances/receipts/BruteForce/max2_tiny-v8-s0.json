@@ -26,48 +26,48 @@
    "step": "compile",
    "module": "Candidate.Common.Basic",
    "rc": 0,
-   "seconds": 2.3,
+   "seconds": 3.7,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.BruteForce.Checker",
    "rc": 0,
-   "seconds": 2.1,
+   "seconds": 3.0,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.BruteForceMax2Tiny",
    "rc": 0,
-   "seconds": 20.6,
+   "seconds": 27.0,
    "timed_out": false
   },
   {
    "step": "kernel",
    "rc": 0,
-   "seconds": 20.6,
+   "seconds": 28.5,
    "timed_out": false
   },
   {
    "step": "closure",
    "rc": 0,
-   "seconds": 1.3,
+   "seconds": 2.0,
    "timed_out": false
   },
   {
    "step": "score",
    "rc": 0,
-   "seconds": 19.3,
+   "seconds": 27.4,
    "timed_out": false
   }
  ],
  "digests": {
-  "commit": "56f82f25ebd2e9bded57376422002e6c09129acf",
+  "commit": "6f369e48e3e487965ef79ec3bb618d277528c1ac",
   "toolchain": "lean:bf8d54e4714cc4b0",
-  "lean_project": "fb26bd712c9dea8b",
-  "policy": "c12ddaec11234e64",
-  "acceptcheck": "609e9ba36f338592",
+  "lean_project": "671f0022d8d94534",
+  "policy": "fd0dc43a87e1d558",
+  "acceptcheck": "d9415be6f14bd994",
   "modules": {
    "Candidate.BruteForce.Checker": "319c0e57723bc64fd43f69a825f8b912d15796085af5c8719107553def92ea84",
    "Candidate.Common.Basic": "f6381de3dc68f5819373e2d2588e03e565d0563ee2bb7bfb668e0487be532392",
@@ -78,7 +78,8 @@
  "score_eligible": true,
  "execution_assurance": "kernel_checked_instance",
  "cost_model": "cost-v3",
- "policy_version": "open-lane-policy-v4",
+ "policy_version": "open-lane-policy-v7",
+ "knowledge": "minimal",
  "scoring": {
   "status": "scored",
   "reason": null,
@@ -90,19 +91,19 @@
   "length": 4112,
   "description_size": 378,
   "size_budget": 8512,
-  "general_kernel_ms": 42,
+  "general_kernel_ms": 35,
   "general_kernel_budget_ms": 120000,
-  "rest_kernel_ms": 17373,
+  "rest_kernel_ms": 24712,
   "axioms": [
    "propext",
    "Classical.choice",
    "Quot.sound"
   ],
-  "closure_visited": 36,
+  "closure_visited": 37,
   "general_constants": 13,
   "checker_constants": 5
  },
- "seconds": 68.3,
- "time": "2026-10-23T12:49:19+0100",
- "replayed_constants": 87
+ "seconds": 94.4,
+ "time": "2026-10-23T18:46:14+0100",
+ "replayed_constants": 80
 }

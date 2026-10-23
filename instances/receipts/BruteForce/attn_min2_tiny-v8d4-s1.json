@@ -1,0 +1,117 @@
+{
+ "schema": "open-lane-receipt-v1",
+ "candidate_id": "library-bruteforceattnmin2tiny",
+ "status": "accepted",
+ "reason": null,
+ "claim_kind": "performance",
+ "certified_count": 64,
+ "domain_size": 64,
+ "claimed_count": 64,
+ "network": "attn_min2_tiny-v8d4-s1",
+ "theorem": "Candidate.BruteForceAttnMin2Tiny.performance",
+ "statement": null,
+ "axioms": [
+  "propext",
+  "Classical.choice",
+  "Quot.sound"
+ ],
+ "isolation": "landlock",
+ "steps": [
+  {
+   "step": "protected",
+   "module": "Protected.N_attn_min2_tiny_v8d4_s1_c64",
+   "cached": true
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.Common.Basic",
+   "rc": 0,
+   "seconds": 6.0,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.BruteForce.Checker",
+   "rc": 0,
+   "seconds": 3.5,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.BruteForce.General",
+   "rc": 0,
+   "seconds": 4.2,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.BruteForceAttnMin2Tiny",
+   "rc": 0,
+   "seconds": 163.5,
+   "timed_out": false
+  },
+  {
+   "step": "kernel",
+   "rc": 0,
+   "seconds": 163.8,
+   "timed_out": false
+  },
+  {
+   "step": "closure",
+   "rc": 0,
+   "seconds": 2.1,
+   "timed_out": false
+  },
+  {
+   "step": "score",
+   "rc": 0,
+   "seconds": 157.9,
+   "timed_out": false
+  }
+ ],
+ "digests": {
+  "commit": "6f369e48e3e487965ef79ec3bb618d277528c1ac",
+  "toolchain": "lean:bf8d54e4714cc4b0",
+  "lean_project": "671f0022d8d94534",
+  "policy": "fd0dc43a87e1d558",
+  "acceptcheck": "d9415be6f14bd994",
+  "modules": {
+   "Candidate.BruteForce.Checker": "319c0e57723bc64fd43f69a825f8b912d15796085af5c8719107553def92ea84",
+   "Candidate.BruteForce.General": "2763bcbf31eaecda5dbdb7c5d8ee7a8b2d22271544222b07279d4b711f7b2a85",
+   "Candidate.Common.Basic": "f6381de3dc68f5819373e2d2588e03e565d0563ee2bb7bfb668e0487be532392",
+   "Candidate.BruteForceAttnMin2Tiny": "14585d1b878c4ad8493c70405af2a0af677b178eba87375d9fe50e588fe5fe63"
+  },
+  "network_file": "cf3721adec1a6a2404ba795e8a93c0518d352fac157315d26a1b524197958c6a"
+ },
+ "score_eligible": true,
+ "execution_assurance": "kernel_checked_instance",
+ "cost_model": "cost-v3",
+ "policy_version": "open-lane-policy-v7",
+ "knowledge": "minimal",
+ "scoring": {
+  "status": "scored",
+  "reason": null,
+  "assurance": "kernel_checked_instance",
+  "cost_model": "cost-v3",
+  "bill": 12224,
+  "extract": 136,
+  "read": 0,
+  "length": 12360,
+  "description_size": 378,
+  "size_budget": 8736,
+  "general_kernel_ms": 34,
+  "general_kernel_budget_ms": 120000,
+  "rest_kernel_ms": 154421,
+  "axioms": [
+   "propext",
+   "Classical.choice",
+   "Quot.sound"
+  ],
+  "closure_visited": 37,
+  "general_constants": 13,
+  "checker_constants": 5
+ },
+ "seconds": 505.7,
+ "time": "2026-10-23T20:34:01+0100",
+ "replayed_constants": 239
+}

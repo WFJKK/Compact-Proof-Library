@@ -2,7 +2,7 @@ name = "CompactProofLibrary"
 version = "0.1.0"
 keywords = ["math"]
 defaultTargets = ["Common", "LinearMaxK", "BruteForce", "LinearMaxKPlans", "Symmetry",
-  "LinearMaxKColumnMax", "Instances"]
+  "LinearMaxKColumnMax", "AttnClasses", "Instances"]
 
 [leanOptions]
 pp.unicode.fun = true
@@ -17,7 +17,7 @@ maxSynthPendingDepth = 3
 [[require]]
 name = "CompactCheck"
 git = "https://github.com/WFJKK/Auto-Research-Compact-Proof-in-Lean"
-rev = "56f82f25ebd2e9bded57376422002e6c09129acf"
+rev = "6f369e48e3e487965ef79ec3bb618d277528c1ac"
 
 [[lean_lib]]
 name = "Common"
@@ -37,6 +37,9 @@ name = "Symmetry"
 [[lean_lib]]
 name = "LinearMaxKColumnMax"
 
+[[lean_lib]]
+name = "AttnClasses"
+
 # The protected modules of the instances, as the acceptance service generates them
 # (CompactCheck's scripts/make_protected.py), so that the instances build here too.
 [[lean_lib]]
@@ -49,11 +52,20 @@ leanOptions = {weak.linter.mathlibStandardSet = false}
 [[lean_lib]]
 name = "Instances"
 srcDir = "instances"
+# Sequential elaboration, as the acceptance service compiles candidates: a module of many decided
+# facts otherwise starts a thread per theorem.
+leanOptions = {Elab.async = false}
 globs = ["LinearMaxKInstances.+", "BruteForceInstances.+", "LinearMaxKPlansInstances.+",
-  "SymmetryInstances.+", "LinearMaxKColumnMaxInstances.+"]
+  "SymmetryInstances.+", "LinearMaxKColumnMaxInstances.+", "AttnClassesInstances.+"]
 
 # `lake build measure`, then `lake exe measure <network.json> ...`: the checker on exported
 # networks, compiled (not a default target: linking it compiles the Mathlib modules it imports).
 [[lean_exe]]
 name = "measure"
 root = "Measure"
+
+# `lake build measure_attn`, then `lake exe measure_attn <network.json> ...`: entry 6 on exported
+# attention networks, compiled (not a default target).
+[[lean_exe]]
+name = "measure_attn"
+root = "MeasureAttn"

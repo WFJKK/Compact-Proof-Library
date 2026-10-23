@@ -1,0 +1,117 @@
+{
+ "schema": "open-lane-receipt-v1",
+ "candidate_id": "library-bruteforceattnmax4tiny",
+ "status": "accepted",
+ "reason": null,
+ "claim_kind": "performance",
+ "certified_count": 256,
+ "domain_size": 256,
+ "claimed_count": 256,
+ "network": "attn_max4_tiny-v4d4-s0",
+ "theorem": "Candidate.BruteForceAttnMax4Tiny.performance",
+ "statement": null,
+ "axioms": [
+  "propext",
+  "Classical.choice",
+  "Quot.sound"
+ ],
+ "isolation": "landlock",
+ "steps": [
+  {
+   "step": "protected",
+   "module": "Protected.N_attn_max4_tiny_v4d4_s0_c256",
+   "cached": true
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.Common.Basic",
+   "rc": 0,
+   "seconds": 4.3,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.BruteForce.Checker",
+   "rc": 0,
+   "seconds": 3.7,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.BruteForce.General",
+   "rc": 0,
+   "seconds": 4.4,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.BruteForceAttnMax4Tiny",
+   "rc": 0,
+   "seconds": 689.4,
+   "timed_out": false
+  },
+  {
+   "step": "kernel",
+   "rc": 0,
+   "seconds": 863.3,
+   "timed_out": false
+  },
+  {
+   "step": "closure",
+   "rc": 0,
+   "seconds": 2.6,
+   "timed_out": false
+  },
+  {
+   "step": "score",
+   "rc": 0,
+   "seconds": 687.3,
+   "timed_out": false
+  }
+ ],
+ "digests": {
+  "commit": "6f369e48e3e487965ef79ec3bb618d277528c1ac",
+  "toolchain": "lean:bf8d54e4714cc4b0",
+  "lean_project": "671f0022d8d94534",
+  "policy": "fd0dc43a87e1d558",
+  "acceptcheck": "d9415be6f14bd994",
+  "modules": {
+   "Candidate.BruteForce.Checker": "319c0e57723bc64fd43f69a825f8b912d15796085af5c8719107553def92ea84",
+   "Candidate.BruteForce.General": "2763bcbf31eaecda5dbdb7c5d8ee7a8b2d22271544222b07279d4b711f7b2a85",
+   "Candidate.Common.Basic": "f6381de3dc68f5819373e2d2588e03e565d0563ee2bb7bfb668e0487be532392",
+   "Candidate.BruteForceAttnMax4Tiny": "4e148101bb929c2be2416e3e736c237d4f1378894a61545cd6e1ca2a96012d33"
+  },
+  "network_file": "02f0787bb7d7fe787153009a8359004bc67485816f95dd8247773fe9352ef4ba"
+ },
+ "score_eligible": true,
+ "execution_assurance": "kernel_checked_instance",
+ "cost_model": "cost-v3",
+ "policy_version": "open-lane-policy-v7",
+ "knowledge": "minimal",
+ "scoring": {
+  "status": "scored",
+  "reason": null,
+  "assurance": "kernel_checked_instance",
+  "cost_model": "cost-v3",
+  "bill": 73472,
+  "extract": 112,
+  "read": 0,
+  "length": 73584,
+  "description_size": 378,
+  "size_budget": 8640,
+  "general_kernel_ms": 37,
+  "general_kernel_budget_ms": 120000,
+  "rest_kernel_ms": 683496,
+  "axioms": [
+   "propext",
+   "Classical.choice",
+   "Quot.sound"
+  ],
+  "closure_visited": 37,
+  "general_constants": 13,
+  "checker_constants": 5
+ },
+ "seconds": 2258.7,
+ "time": "2026-10-23T20:42:26+0100",
+ "replayed_constants": 623
+}

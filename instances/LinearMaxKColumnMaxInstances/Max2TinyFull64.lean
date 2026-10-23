@@ -23,7 +23,7 @@ namespace LinearMaxKColumnMaxInstances.Max2TinyFull64
 open CompactCheck LinearMaxKColumnMax Protected.N_max2_tiny_v8_s0_c64
 
 /-- `Full64`'s plan. -/
-def plan : List Term :=
+def plan : List LinearMaxKColumnMax.Term :=
   [.diag 0, .diag 3,
     .box 1 0 0 true, .box 2 1 1 true, .box 4 0 0 true, .box 5 0 0 true, .box 6 0 0 true,
     .box 7 0 0 true,

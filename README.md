@@ -6,10 +6,13 @@ lane, with theorems that say what it certifies and what it costs. An instance is
 the kernel evaluates the checker on its weights, and the entry's theorems turn the result into a
 proof about that network.
 
-The specification is CompactCheck's, pinned to commit `56f82f2` of
+The specification is CompactCheck's, pinned to commit `6f369e4` of
 [Auto-Research-Compact-Proof-in-Lean](https://github.com/WFJKK/Auto-Research-Compact-Proof-in-Lean):
 `Correct` and `numCorrect` in `Spec.lean`, the exact evaluator, and the counted language
-(`CountedOps.lean`, policy v4, where a checker reads the shape and the length of a weight for free).
+(`CountedOps.lean`, policy v7). A checker reads the shape and the length of a weight for free, and
+has CompactCheck's general single rule `gsingle` for attention networks. Every entry uses only the
+minimal knowledge condition: the base allowlist, none of the legacy lane's rules for groups of
+inputs.
 The entries prove theorems about those definitions, never about copies of them. Lean 4.35.0-rc4,
 Mathlib v4.35.0-rc4; every theorem depends on the standard axioms only (`propext`,
 `Classical.choice`, `Quot.sound`).
@@ -19,7 +22,8 @@ Mathlib v4.35.0-rc4; every theorem depends on the standard axioms only (`propext
 An entry's theorems hold for every size and every choice of weights. They say three things:
 
 * soundness: the checker never certifies more inputs than the network answers correctly;
-* cost: the checker's bill, as a formula in the sizes (and, for entries 3 and 5, the plan);
+* cost: the checker's bill, as a formula in the sizes (and, for entries 3 and 5, the plan; for
+  entry 2 on attention networks, the charge of one forward pass, which its instances compute);
 * count: which inputs the checker certifies, as a condition on the weights.
 
 The cost is the same for every network of the same sizes (and, for entries 3 and 5, the same plan).
@@ -32,10 +36,11 @@ length the cost formula gives.
 | entry | method | networks | pipeline baseline |
 | --- | --- | --- | --- |
 | 1, `LinearMaxK/` | an exact test for each group of inputs with the same largest token | linear max-of-k, every `k`, `V`, `d` | 03, contract and interval, for every `k` |
-| 2, `BruteForce/` | one forward pass on every input | every network and task (see the note in entry 2) | 01, brute force |
+| 2, `BruteForce/` | one forward pass on every input | every network and task: `check` for linear networks, `checkGeneral` for attention | 01, brute force |
 | 3, `LinearMaxKPlans/` | entry 1's test on chosen pieces of groups | linear max-of-k, every `k`, `V`, `d` | 03 with splitting, 04 with a budget |
-| 4, `Symmetry/` | one forward pass per sorted input, weighted by its reorderings | networks that sum their input over the positions first (see the note in entry 2) | 02, symmetry |
+| 4, `Symmetry/` | one forward pass per sorted input, weighted by its reorderings | networks that sum their input over the positions first: the linear ones, not the attention ones | 02, symmetry |
 | 5, `LinearMaxKColumnMax/` | tests on column maxima of `M`, against all outputs at once | linear max-of-k, every `k`, `V`, `d` | none: an agent's open-lane proof (`Full64`), generalised |
+| 6, `AttnClasses/` | path tables, margins, bounds on `exp`, one test per class of inputs | one-head attention, max or min of `n` tokens, every `n`, `V`, `d`, `h` | none; compare Gross et al.'s cubic proof |
 
 ## Entry 1: linear max-of-k (`LinearMaxK/`)
 
@@ -149,18 +154,40 @@ written once for every graph and every task, and every other entry is measured a
 * `check_billed_maxK` (`MaxK.lean`): on the linear max-of-k family with well-formed weights, the count
   is exactly `numCorrect` and the bill is `V^k (k d + d² + d V + V - 1)`.
 
-A note on which networks: soundness holds for every graph, but at the pinned CompactCheck a forward
-pass can be billed only on graphs of `input`, `sum`, `linear` and `add` nodes (`singleCost`). On
-any other network, attention networks among them, the run fails and certifies nothing. The same
-holds for entry 4.
+`check` bills a forward pass only on graphs of `input`, `sum`, `linear` and `add` nodes
+(`singleCost`); on an attention network it fails. `checkGeneral` (`General.lean`) is the same
+program with CompactCheck's general single rule `gsingle`: the general checker's exact forward
+pass, `exp` and softmax enclosed in rational bounds, charged as `cost-v3` charges a `single` leaf
+(and refused on linear networks, whose `linear` nodes it does not evaluate).
+
+* `checkGeneral_sound`: for every graph, task, weights and certificate, the count is at most
+  `numCorrect`.
+* `countGSingles_run`: given each input's verdict and charge as a separate fact, the run of the
+  checker. One `decide` over every forward pass of an attention network does not fit in the
+  kernel's memory, so an instance proves one fact per input and puts them together with this
+  lemma (`scripts/make_brute_general_instance.py` writes such an instance).
+
+On the attention models every forward pass is charged the same,
+`2 n d h + 2 d h + 4 n h + 2 n d + 2 n + d + V d + V - 1` with `n` positions and head size `h`
+(191 on the tiny max-of-2 networks, 287 on the tiny max-of-4 ones). The formula is not proved:
+the instances state the charge the kernel computes, and `lake exe measure_attn --bf` finds the
+formula's value on every network of the four attention zoos' development sets.
 
 ### Instances
 
 | network | k | V | d | certified | bill | length | checked by |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `max2_tiny-v8-s0` | 2 | 8 | 4 | 64 | 4,032 | 4,112 | kernel; accepted and scored |
+| `attn_max2_tiny-v8d4-s1` | 2 | 8 | 4 | 64 | 12,224 | 12,360 | kernel, 64 facts; accepted and scored |
+| `attn_min2_tiny-v8d4-s1` | 2 | 8 | 4 | 64 | 12,224 | 12,360 | kernel, 64 facts; accepted and scored |
+| `attn_max4_tiny-v4d4-s0` | 4 | 4 | 4 | 256 | 73,472 | 73,584 | kernel, 256 facts; accepted and scored |
+| `attn_min4_tiny-v4d4-s0` | 4 | 4 | 4 | 256 | 73,472 | 73,584 | kernel, 256 facts; accepted and scored |
 
-The receipt is in `instances/receipts/BruteForce/`: description size 378 of a budget of 8,512.
+The attention networks are the pipeline's tiny ones (`tests/attn_*_tiny`, head size `h = d = 4`),
+the development seed of each. Their length counts the 136 or 112 weight entries, not the scale the
+exporter adds as `#const0`, as the service counts them. The receipts are in
+`instances/receipts/BruteForce/`: description size 378 for both checkers, of a budget of 8,512 or
+more.
 
 ## Entry 3: plans (`LinearMaxKPlans/`)
 
@@ -246,6 +273,11 @@ The receipt is in `instances/receipts/Symmetry/`: description size 917 of a budg
 `max2-v64` network the bill is 2,080 forward passes, 1,362,400 (length 1,363,488): about half of
 brute force, as the pipeline's baseline 02 predicts.
 
+Symmetry does not carry over to the attention models: they do not use their input only through a
+sum over the positions (the positional embeddings, and the query read at the last position, make
+the reorderings of an input different inputs to the network), and the pipeline's checker refuses
+its symmetry rule there for that reason.
+
 ## Entry 5: column maxima (`LinearMaxKColumnMax/`)
 
 ### The method
@@ -317,7 +349,7 @@ terms. For an invalid plan it certifies nothing.
 
 The plan is `Full64`'s, term for term: 2 diagonal tests, 16 boxes, 9 refined tests and 3 exact
 tests. `Full64` certified the inputs `(6, 7)` and `(7, 6)` with the forward pass it ran to bound the
-weights' lengths; under policy v4 the lengths are free, and `exact [6, 7]` certifies them. The
+weights' lengths; since policy v4 the lengths are free, and `exact [6, 7]` certifies them. The
 receipt is in `instances/receipts/LinearMaxKColumnMax/`: description size 7,404 of a budget of
 8,512 (`Full64`'s own, written for this network only, was 7,502).
 
@@ -337,6 +369,154 @@ measurement, not a result the open lane would score. Whether a plan that fits th
 of the gain is open; the per-pair choices alone carry about 3,200 bits. On the tiny network the
 script writes `Full64`'s plan itself.
 
+## Entry 6: one-head attention (`AttnClasses/`)
+
+### The family
+
+The pipeline's attention models (`models/attn-max2`, `attn-min2`, `attn-max4`, `attn-min4`, one
+`model.py`): Gross et al.'s one-layer, one-head, attention-only transformer, with no biases and
+learned positional embeddings. `n` positions, `V` tokens, width `d`, head size `h`. Each position's
+residual is its token's embedding (`E`, `V × d`) plus its position's (`P`, `n × d`). The last
+position `Q = n - 1` attends over every position with `W_Q` and `W_K` (`d × h`) at the scale `c`
+(`h^(-1/2)` as a float, which the exporter writes as the constant `#const0`); the head reads the
+values `W_V` (`d × h`) and writes back through `W_O` (`h × d`), and `U` (`d × V`) gives the logits.
+The label is the largest token (`max`) or the smallest (`min`). `IsAttn` recognises the graph the
+exporter writes, 26 operations, and `eval_attn` follows them over the reals.
+
+On an input `x` with query token `q = x_Q` the logits are (`logit_eq`)
+
+    logit_j = D[q, j] + Σ_p α_p O[x_p, p, j]
+
+where `α` is the softmax over the positions of the scores `S[q, x_p, p]`, and the three path tables
+are
+
+| table | entry | what it is |
+| --- | --- | --- |
+| `D[q, j]` | `(E_q + P_Q) U` | the direct path of the query token |
+| `O[t, p, j]` | `(E_t + P_p) W_V W_O U` | what token `t` at position `p` writes through the head |
+| `S[q, t, p]` | `c (E_q + P_Q) W_Q · (E_t + P_p) W_K` | the score of token `t` at position `p` |
+
+### The method
+
+Let `ℓ` be the label and `j` any other output. The weights `α_p` are positive and add up to one, so
+
+    logit_ℓ - logit_j ≥ Σ_p α_p H_p,   H_p = Dd[q, ℓ] + G[x_p, p, ℓ]
+
+with the margins
+
+    Dd[q, ℓ] = D[q, ℓ] - max_{j ≠ ℓ} D[q, j]
+    G[t, p, ℓ] = O[t, p, ℓ] - max_{j ≠ ℓ} O[t, p, j]
+
+Multiplied by the softmax's denominator, this says the input is answered correctly if
+
+    Σ_p K(q, x_p, p, ℓ) > 0,   K = min (lo · H, hi · H)
+
+where `lo ≤ exp S ≤ hi` are the counted language's bounds on `exp` (CompactCheck's `Exp.lean`, in
+multiples of `2^-120`), so that `K ≤ exp(S) · H` whatever the sign of `H`.
+
+The checker tests classes of inputs. Ranks order the tokens so that the label has the largest rank:
+the token itself for `max`, `V - 1 - t` for `min`. A class fixes the query's rank, the label's
+rank, the set `P` of the other positions that hold the label, and the largest rank `ρ'` at the
+positions `R` left. Its test is
+
+    K(q, q, Q, ℓ) + Σ_{p ∈ P} K(q, ℓ, p, ℓ) + Σ_{p ∈ R} m_p(ρ') > 0
+
+with `m_p(ρ')` the least `K(q, t, p, ℓ)` over the tokens `t` of rank at most `ρ'`, a running
+minimum. The query's position and the label's enter exactly, every other position through its
+running minimum. The checker computes the tables once, tests every class, and keeps the verdicts in
+a table. The count then looks up each input's class there: bookkeeping on public structure, which
+the counted language does not charge, and which touches no number of the network.
+
+The test is sufficient, not exact. It loses in two places: the margins take the worst other output
+separately for the direct path and for each position; and each position in `R` is bounded by its
+least term over all the ranks up to `ρ'`, whatever its own token, since the class fixes only the
+largest rank in `R`, not which position holds it or what the others are. At `n = 2` the classes are
+the inputs themselves (the query's rank, the label's rank and the other rank fix one input), and the
+second loss applies only when the query holds the label. At `n = 4` the classes are far fewer than
+the inputs: 8,416 for 65,536 at `V = 16`, and 528,256 for 16,777,216 at `V = 64`.
+
+Gross et al.'s cubic proof, as the pipeline describes it (`results/gross-cubic-2026-10-16`),
+pessimises once per query token, largest token, non-maximal token and number of copies of the
+largest, and bounds the attention by a convexity argument: the head's output is a weighted average.
+Here the positions are kept apart (the networks have positional embeddings, and `n` is small), and
+the softmax is not bounded on its own: the test is on the sum of each position's `exp(S)` times its
+margin, the numerator of the weighted average.
+
+### The theorems
+
+* `check_sound` (`Sound.lean`): for every graph of the family, the label `max` or `min`, all
+  weights and all certificates, the count is at most `numCorrect`.
+* `check_billed`: on well-formed weights (`Net.WF` in `Family.lean`: the seven matrices with their
+  shapes and lengths, and the scale), when `exp` accepts every score (it refuses arguments of
+  `2^12` or more, and numbers that are not dyadic), the count is the number of inputs whose class
+  passes, and the bill is `bill V n d h` (`Check.lean`), the sum of
+
+  | part | operations |
+  | --- | --- |
+  | queries and keys | `h d + V d + 2 V h d + n h d` |
+  | scores, bounds on `exp` | `V² h + V n h + 4 V² n` |
+  | paths through the head | `d² h + d² V + V² d + n V d` |
+  | direct path | `V d + V² d` |
+  | margins | `V (n + 1) (5V - 4)`, for `V ≥ 2` |
+  | classes | `vtCost V n` |
+
+  `vtCost V n` (`Runs.lean`) adds up, over the pairs of a query rank and a label rank `λ` at least
+  as large: 4 operations for the query's term, and 4 for the label's term at each other position;
+  `5λ - 1` per other position (`λ ≥ 1`) for its terms and their running minimum, when some class
+  needs them; and per class one addition for each position in `R` and a comparison (the positions in
+  `P` are added once per set `P`). For `n ≥ 3` it grows as `n 2^n V³`, while brute force runs `V^n`
+  forward passes.
+* `eval_attn`, `logit_eq`, `correct_of_bound` (`Family.lean`): the graph's real output is the formula
+  above, and a positive sum makes the answer correct.
+
+### Instances
+
+| network | n | V | d = h | certified | bill | length | brute force | checked by |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `attn_max2_tiny-v8d4-s1` | 2 | 8 | 4 | 64 | 3,381 | 3,517 | 12,360 | kernel; accepted and scored |
+| `attn_min2_tiny-v8d4-s1` | 2 | 8 | 4 | 64 | 3,381 | 3,517 | 12,360 | kernel; accepted and scored |
+| `attn_max4_tiny-v4d4-s0` | 4 | 4 | 4 | 256 | 2,151 | 2,263 | 73,584 | kernel; accepted and scored |
+| `attn_min4_tiny-v4d4-s0` | 4 | 4 | 4 | 256 | 2,151 | 2,263 | 73,584 | kernel; accepted and scored |
+
+The tiny networks answer every input correctly, and the checker certifies all of them; brute force
+is entry 2's length on the same network. The receipts are in `instances/receipts/AttnClasses/`:
+description size 6,844 of a budget of 8,736 (`n = 2`) or 8,640 (`n = 4`).
+
+### On the development networks
+
+`lake exe measure_attn` runs the checker, compiled, on exported networks. On all 54 development
+networks of the four zoos, `exp` accepted every score and the bill is `bill V n d h`. Six networks
+per row, medians and the lowest; `share` is the share of the inputs the network answers correctly
+that the proof certifies.
+
+| task, size | d = h | bill | length | B / length | share: median, lowest | cubic proof: B / length | its share: median, lowest |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| max of 2, v64 | 32 | 766,241 | 774,497 | 45.9 | 98.3%, 96.5% | 6.3 | 99.1%, 98.1% |
+| max of 2, v128 | 32 | 2,541,121 | 2,553,473 | 69.2 | 96.7%, 96.1% | 4.3 | 98.3%, 98.0% |
+| min of 2, v64 | 32 | 766,241 | 774,497 | 45.9 | 98.7%, 98.2% | 6.3 | 99.2%, 99.0% |
+| min of 2, v128 | 32 | 2,541,121 | 2,553,473 | 69.2 | 96.3%, 83.6% | 4.3 | 98.3%, 89.1% |
+| max of 4, v16 | 8 | 66,323 | 66,867 | 974 | 99.7%, 98.9% | 223 | 99.5%, 98.9% |
+| max of 4, v24 | 12 | 206,475 | 207,675 | 3,294 | 99.6%, 99.2% | 705 | 99.2%, 98.8% |
+| max of 4, v64 | 32 | 3,497,795 | 3,506,115 | 62,982 | 97.7%, 97.3% | 12,283 | 97.5%, 96.8% |
+| min of 4, v16 | 8 | 66,323 | 66,867 | 974 | 99.5%, 98.5% | 223 | 99.4%, 98.0% |
+| min of 4, v24 | 12 | 206,475 | 207,675 | 3,294 | 99.7%, 99.5% | 705 | 99.5%, 99.4% |
+
+* What is proved: the bill and the length, for every well-formed network of these sizes on which
+  `exp` accepts every score (`check_billed`); the shares are measurements.
+* `B` is the zoo's brute-force length, within 0.4% of entry 2's. The cubic proof's numbers are from
+  the pipeline's run of Gross et al.'s code on the same networks (`results/gross-cubic-2026-10-16`).
+  Its length is the pipeline's count of its operations (1 per multiply-add, addition or
+  comparison, 3 per softmax entry, a small constant per inner loop), within a factor of about 2
+  of any reasonable count, not a checked bill; its counts come from float arithmetic, checked only
+  against the true number of correct inputs.
+* At `n = 4` entry 6 is 4.4 to 5.1 times shorter than the cubic proof, and certifies more inputs on
+  28 of the 30 networks (on the other two, at most 0.01 points fewer). At `n = 2` it is 7.2 to 16
+  times shorter and certifies fewer on all 24, by 0.05 to 5.5 points. A class is one input there, so
+  the gain over brute force is the path tables alone.
+* On these networks neither certifies every correct input. The pipeline's hand-built `token_convex`
+  proofs do, at `n = 4`: at `B/460` to `B/497` (v16), `B/1,766` to `B/1,818` (v24) and `B/14,836`
+  (v64), 1.8 to 4.2 times longer than entry 6.
+
 ## Layout
 
 | file | what it is |
@@ -351,6 +531,7 @@ script writes `Full64`'s plan itself.
 | `LinearMaxK/Table.lean` | the count from a table of integers, for instances too large for one `decide` |
 | `BruteForce/Checker.lean` | entry 2's checker, its soundness and its bill, for every network |
 | `BruteForce/MaxK.lean` | brute force on the linear max-of-k family: exact, and its bill |
+| `BruteForce/General.lean` | brute force with the general single rule, for attention networks: soundness, and the run from one fact per input |
 | `LinearMaxKPlans/Pieces.lean` | pieces of groups: membership, sizes, valid plans |
 | `LinearMaxKPlans/Checker.lean` | entry 3's checker |
 | `LinearMaxKPlans/Runs.lean` | what it computes, and what it costs |
@@ -362,19 +543,31 @@ script writes `Full64`'s plan itself.
 | `LinearMaxKColumnMax/Checker.lean` | entry 5's plans and checker |
 | `LinearMaxKColumnMax/Runs.lean` | what it computes, and what it costs |
 | `LinearMaxKColumnMax/Sound.lean` | soundness, and the count and the bill |
+| `AttnClasses/Checker.lean` | entry 6's checker |
+| `AttnClasses/Ops.lean` | the operations of the attention graph, over the reals |
+| `AttnClasses/Family.lean` | the family: graph, well-formed weights, path tables, logits, the bound that makes an answer correct |
+| `AttnClasses/Runs.lean` | what each part of the checker computes, and what it costs |
+| `AttnClasses/Check.lean` | the whole run on well-formed weights: its count and its bill |
+| `AttnClasses/Sound.lean` | soundness, and the count and the bill |
 | `instances/` | protected modules, instances, network files, receipts |
 | `Measure.lean` | `lake exe measure`: entry 1's checker on exported networks, compiled |
+| `MeasureAttn.lean` | `lake exe measure_attn`: entry 6's checker on exported attention networks, compiled |
 | `scripts/make_candidate.py` | packages an instance for the acceptance service |
 | `scripts/make_table_instance.py` | writes a kernel-checked instance of entry 1 for a large network |
 | `scripts/column_max_plan.py` | writes entry 5's plan for a max-of-2 network, and runs the checker on it |
+| `scripts/make_brute_general_instance.py` | writes a kernel-checked instance of brute force on an attention network, one fact per input |
 
 ## Build
 
     lake exe cache get          # Mathlib's prebuilt files
     lake build                  # the entries and the instances; every proof is checked
-    lake build measure          # optional: the measuring tool
+    lake build measure          # optional: the measuring tools
+    lake build measure_attn
 
-The `max2-v64-s0` instance takes about 4 minutes and 3 GB; everything else takes seconds.
+The `max2-v64-s0` instance takes about 4 minutes and 3 GB. The instances of brute force on the
+attention networks take about 2 minutes (64 forward passes) and 8 minutes (256) each, one
+`decide` per forward pass; everything else takes seconds to a minute. With Mathlib and
+CompactCheck built, the whole library and its instances build in about 17 minutes on two cores.
 
 ## Submitting an instance to the acceptance service
 
@@ -393,21 +586,32 @@ itself. For a network of the zoo, `--model` is the model folder, `models/max2`.
 
 Lean's kernel and the definitions of CompactCheck's specification: `Spec.lean` and the files it rests
 on (`Semantics`, `Eval`, `Network`, `Tensor`, `Task`, `Walk`). The statements about cost rest also on
-the counted language (`Counted`, `CountedCheck`, `CountedOps`), which says what each operation is
-charged. Nothing in this library has to be trusted: it proves theorems about those definitions.
+the counted language (`Counted`, `CountedCheck`, `CountedGeneral`, `CountedOps`), which says what each
+operation is charged. Nothing in this library has to be trusted: it proves theorems about those definitions.
 
 An instance is about the weights in its protected module (`instances/Protected/`), the network's float
-weights as exact dyadic rationals. CompactCheck's `scripts/make_protected.py` writes the module from
-the network file; the acceptance service writes it itself and checks it against the network file
-with the checker's own reader.
+weights as exact dyadic rationals, and about the graph the module states. CompactCheck's
+`scripts/export_network.py` writes the network file from the trained network (for the attention
+models, the 26 operations of `model.py`'s forward pass), and `scripts/make_protected.py` writes the
+module from the file; the acceptance service writes the module itself and checks it against the
+network file with the checker's own reader. That the graph is the network's forward pass is the
+exporter's claim, not a theorem.
 
 ## Next
 
 * Entry 5 at `V = 64` within the description-size budget: a plan that fits (fewer, larger boxes,
   or a compact encoding of the per-pair choices, decoded by free code), then a kernel-checked
   instance with the tests on the integer table, as entry 1's large instances do.
-* Gross et al.'s hand-written proofs for the attention max-of-k transformer, which need the counted
-  language's bounds on `exp` and `softmax`.
+* Entry 6 to every correct input: for the inputs of the classes that fail, a test of each input
+  against each other output, from the same tables and bounds on `exp`. At `n = 2`, each input's
+  own term at the other position instead of its running minimum, which is cheaper too (in a float
+  prototype, 0 to 1.6 points more on the 24 two-token development networks, median 0.1).
+* Entry 6 computes the bounds on `exp` at the query's position for every token, but reads them
+  only for the query's own token: computing that one saves `4 V (V - 1)` operations, 2 to 3% at
+  `n = 2` and 0.5 to 1.5% at `n = 4`.
+* Kernel-checked instances of entry 6 at the zoo's sizes. They will need the evaluation split, as
+  entry 1's `Table.lean` splits it: one `decide` over entry 1's run at `V = 64` already runs out
+  of memory.
 * Kernel-checked instances of entry 1 for the other development seeds and for `V = 128`, with
   `scripts/make_table_instance.py` (at `V = 128` the table is four times larger and, by a count of
   operations, the kernel's work about ten times; not measured).

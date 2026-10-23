@@ -1,0 +1,149 @@
+{
+ "schema": "open-lane-receipt-v1",
+ "candidate_id": "library-attnclassesattnmin2tiny",
+ "status": "accepted",
+ "reason": null,
+ "claim_kind": "performance",
+ "certified_count": 64,
+ "domain_size": 64,
+ "claimed_count": 64,
+ "network": "attn_min2_tiny-v8d4-s1",
+ "theorem": "Candidate.AttnClassesAttnMin2Tiny.performance",
+ "statement": null,
+ "axioms": [
+  "propext",
+  "Classical.choice",
+  "Quot.sound"
+ ],
+ "isolation": "landlock",
+ "steps": [
+  {
+   "step": "protected",
+   "module": "Protected.N_attn_min2_tiny_v8d4_s1_c64",
+   "cached": true
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.Common.Basic",
+   "rc": 0,
+   "seconds": 6.7,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Ops",
+   "rc": 0,
+   "seconds": 9.2,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Checker",
+   "rc": 0,
+   "seconds": 6.6,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Family",
+   "rc": 0,
+   "seconds": 11.3,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Runs",
+   "rc": 0,
+   "seconds": 15.4,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Check",
+   "rc": 0,
+   "seconds": 8.1,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Sound",
+   "rc": 0,
+   "seconds": 16.2,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClassesAttnMin2Tiny",
+   "rc": 0,
+   "seconds": 18.9,
+   "timed_out": false
+  },
+  {
+   "step": "kernel",
+   "rc": 0,
+   "seconds": 23.1,
+   "timed_out": false
+  },
+  {
+   "step": "closure",
+   "rc": 0,
+   "seconds": 4.3,
+   "timed_out": false
+  },
+  {
+   "step": "score",
+   "rc": 0,
+   "seconds": 20.2,
+   "timed_out": false
+  }
+ ],
+ "digests": {
+  "commit": "6f369e48e3e487965ef79ec3bb618d277528c1ac",
+  "toolchain": "lean:bf8d54e4714cc4b0",
+  "lean_project": "671f0022d8d94534",
+  "policy": "fd0dc43a87e1d558",
+  "acceptcheck": "d9415be6f14bd994",
+  "modules": {
+   "Candidate.AttnClasses.Check": "3297fd2d8eb0ad503b7c5742ce3c286476f9438e775340bd5fb3a6fa945f2043",
+   "Candidate.AttnClasses.Checker": "9975119beb6fde00faba5f3be80a3e9a651d609bd09c38adbb13d2ea2a121e65",
+   "Candidate.AttnClasses.Family": "6b1b1073b505c8fd33566d98873cc59344fb41b8d6f3f850aea3ae4b1fdfdc1e",
+   "Candidate.AttnClasses.Ops": "d29d7e563104d7576915ff472ab1ce5a8d2a8f88c615cfe5f91972bd16f47bea",
+   "Candidate.AttnClasses.Runs": "53c5a54544d0422b9bbf0fb9da9332de7402937295f4c5dd8d2fb04286fdb4b7",
+   "Candidate.AttnClasses.Sound": "0e31978009afe3c4099c8c27f81328dbda64327479bd8f3ded20312810a71438",
+   "Candidate.Common.Basic": "f6381de3dc68f5819373e2d2588e03e565d0563ee2bb7bfb668e0487be532392",
+   "Candidate.AttnClassesAttnMin2Tiny": "14875776fdd124b211ef4bbfd0f5b0c18000772fe1a7d53e313075fa834ed1b4"
+  },
+  "network_file": "cf3721adec1a6a2404ba795e8a93c0518d352fac157315d26a1b524197958c6a"
+ },
+ "score_eligible": true,
+ "execution_assurance": "kernel_checked_instance",
+ "cost_model": "cost-v3",
+ "policy_version": "open-lane-policy-v7",
+ "knowledge": "minimal",
+ "scoring": {
+  "status": "scored",
+  "reason": null,
+  "assurance": "kernel_checked_instance",
+  "cost_model": "cost-v3",
+  "bill": 3381,
+  "extract": 136,
+  "read": 0,
+  "length": 3517,
+  "description_size": 6844,
+  "size_budget": 8736,
+  "general_kernel_ms": 3146,
+  "general_kernel_budget_ms": 120000,
+  "rest_kernel_ms": 11651,
+  "axioms": [
+   "propext",
+   "Classical.choice",
+   "Quot.sound"
+  ],
+  "closure_visited": 129,
+  "general_constants": 379,
+  "checker_constants": 26
+ },
+ "seconds": 145.5,
+ "time": "2026-10-23T20:59:01+0100",
+ "replayed_constants": 475
+}

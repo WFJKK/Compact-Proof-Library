@@ -26,76 +26,76 @@
    "step": "compile",
    "module": "Candidate.Common.Basic",
    "rc": 0,
-   "seconds": 2.3,
+   "seconds": 4.0,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Family",
    "rc": 0,
-   "seconds": 2.5,
+   "seconds": 4.3,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Checker",
    "rc": 0,
-   "seconds": 2.1,
+   "seconds": 3.4,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Groups",
    "rc": 0,
-   "seconds": 2.6,
+   "seconds": 3.8,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Runs",
    "rc": 0,
-   "seconds": 4.2,
+   "seconds": 6.9,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Sound",
    "rc": 0,
-   "seconds": 2.4,
+   "seconds": 3.6,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxKMax2Tiny",
    "rc": 0,
-   "seconds": 3.0,
+   "seconds": 4.9,
    "timed_out": false
   },
   {
    "step": "kernel",
    "rc": 0,
-   "seconds": 3.4,
+   "seconds": 4.9,
    "timed_out": false
   },
   {
    "step": "closure",
    "rc": 0,
-   "seconds": 1.4,
+   "seconds": 1.9,
    "timed_out": false
   },
   {
    "step": "score",
    "rc": 0,
-   "seconds": 3.3,
+   "seconds": 5.2,
    "timed_out": false
   }
  ],
  "digests": {
-  "commit": "56f82f25ebd2e9bded57376422002e6c09129acf",
+  "commit": "6f369e48e3e487965ef79ec3bb618d277528c1ac",
   "toolchain": "lean:bf8d54e4714cc4b0",
-  "lean_project": "fb26bd712c9dea8b",
-  "policy": "c12ddaec11234e64",
-  "acceptcheck": "609e9ba36f338592",
+  "lean_project": "671f0022d8d94534",
+  "policy": "fd0dc43a87e1d558",
+  "acceptcheck": "d9415be6f14bd994",
   "modules": {
    "Candidate.Common.Basic": "f6381de3dc68f5819373e2d2588e03e565d0563ee2bb7bfb668e0487be532392",
    "Candidate.LinearMaxK.Checker": "9ad11244474369bae896e075c93ca0178b7da4c2db9e733433c9d80eb464793a",
@@ -110,7 +110,8 @@
  "score_eligible": true,
  "execution_assurance": "kernel_checked_instance",
  "cost_model": "cost-v3",
- "policy_version": "open-lane-policy-v4",
+ "policy_version": "open-lane-policy-v7",
+ "knowledge": "minimal",
  "scoring": {
   "status": "scored",
   "reason": null,
@@ -122,19 +123,19 @@
   "length": 1081,
   "description_size": 4303,
   "size_budget": 8512,
-  "general_kernel_ms": 419,
+  "general_kernel_ms": 618,
   "general_kernel_budget_ms": 120000,
-  "rest_kernel_ms": 1063,
+  "rest_kernel_ms": 1808,
   "axioms": [
    "propext",
    "Classical.choice",
    "Quot.sound"
   ],
-  "closure_visited": 96,
-  "general_constants": 214,
+  "closure_visited": 97,
+  "general_constants": 211,
   "checker_constants": 27
  },
- "seconds": 29.5,
- "time": "2026-10-23T12:48:50+0100",
- "replayed_constants": 356
+ "seconds": 46.1,
+ "time": "2026-10-23T18:45:27+0100",
+ "replayed_constants": 345
 }
