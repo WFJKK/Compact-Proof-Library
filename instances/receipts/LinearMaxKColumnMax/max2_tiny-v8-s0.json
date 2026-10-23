@@ -26,14 +26,14 @@
    "step": "compile",
    "module": "Candidate.Common.Basic",
    "rc": 0,
-   "seconds": 2.2,
+   "seconds": 2.6,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Family",
    "rc": 0,
-   "seconds": 2.7,
+   "seconds": 2.9,
    "timed_out": false
   },
   {
@@ -47,21 +47,21 @@
    "step": "compile",
    "module": "Candidate.LinearMaxK.Groups",
    "rc": 0,
-   "seconds": 2.5,
+   "seconds": 2.3,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Runs",
    "rc": 0,
-   "seconds": 4.1,
+   "seconds": 4.3,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Sound",
    "rc": 0,
-   "seconds": 2.2,
+   "seconds": 2.3,
    "timed_out": false
   },
   {
@@ -75,46 +75,46 @@
    "step": "compile",
    "module": "Candidate.LinearMaxKColumnMax.Checker",
    "rc": 0,
-   "seconds": 2.2,
+   "seconds": 2.4,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxKColumnMax.Runs",
    "rc": 0,
-   "seconds": 2.8,
+   "seconds": 3.0,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxKColumnMax.Sound",
    "rc": 0,
-   "seconds": 3.7,
+   "seconds": 3.5,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxKColumnMaxMax2TinyFull64",
    "rc": 0,
-   "seconds": 3.0,
+   "seconds": 3.7,
    "timed_out": false
   },
   {
    "step": "kernel",
    "rc": 0,
-   "seconds": 3.9,
+   "seconds": 4.4,
    "timed_out": false
   },
   {
    "step": "closure",
    "rc": 0,
-   "seconds": 1.1,
+   "seconds": 1.4,
    "timed_out": false
   },
   {
    "step": "score",
    "rc": 0,
-   "seconds": 3.8,
+   "seconds": 4.2,
    "timed_out": false
   }
  ],
@@ -131,11 +131,11 @@
    "Candidate.LinearMaxK.Groups": "f7cc2fd139b9ce34d616f4afa77fdc2c89abe6530c8822dcfb49aa9813f63b1e",
    "Candidate.LinearMaxK.Runs": "0605b2ea314c7f5173280473fce0f90e89c7ff73a76f97671d6fbe2a38e39c3f",
    "Candidate.LinearMaxK.Sound": "5e6c78eee89c1439766abc93f7688c595ffab5fb9ae89033da3e107003ec60eb",
-   "Candidate.LinearMaxKColumnMax.Checker": "801c95ff94a202537551e4351aed3171de5159ead603daaa4e63b7ec42d1ea3e",
+   "Candidate.LinearMaxKColumnMax.Checker": "87f79834fb88d668ee03aaac0bb5a2706ee263fb28d71be2bb31ad3a27d6550f",
    "Candidate.LinearMaxKColumnMax.Runs": "881854ac1f4c809fb3646058f6d5b3db3eca738b75470f96d9f1c0d7efa510ba",
    "Candidate.LinearMaxKColumnMax.Sound": "641ced2778a01c63aff684a80626a864bf72ed7ce3a8b18fed8e87d7f7f356b3",
    "Candidate.Symmetry.Sorted": "1b0d158320620293c5096dfdab2c0504d11bf574868634c1c04830db6297b4bf",
-   "Candidate.LinearMaxKColumnMaxMax2TinyFull64": "bbf8dd30fb6ada82fb2975b93a87639b2db9c494441994a2b0e9c5de617248e3"
+   "Candidate.LinearMaxKColumnMaxMax2TinyFull64": "c0ce3185e0353626945892fea7c2188ad0dab65aac800a3bbd8b502b1a795e1f"
   },
   "network_file": "af7beeae9cfa75951c881d4ec320d6384648984033f33209eb2bcfcb05557346"
  },
@@ -154,9 +154,9 @@
   "length": 661,
   "description_size": 7404,
   "size_budget": 8512,
-  "general_kernel_ms": 620,
+  "general_kernel_ms": 822,
   "general_kernel_budget_ms": 120000,
-  "rest_kernel_ms": 1401,
+  "rest_kernel_ms": 1440,
   "axioms": [
    "propext",
    "Classical.choice",
@@ -166,7 +166,7 @@
   "general_constants": 347,
   "checker_constants": 65
  },
- "seconds": 41.2,
- "time": "2026-10-23T12:48:08+0100",
+ "seconds": 44.3,
+ "time": "2026-10-23T13:39:30+0100",
  "replayed_constants": 713
 }

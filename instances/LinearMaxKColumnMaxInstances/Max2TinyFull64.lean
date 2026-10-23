@@ -8,7 +8,7 @@ import LinearMaxKColumnMax.Sound
 width `d = 4`. The protected module is the one the acceptance service generates for a claim of 64.
 
 The plan is the one of the agent's `Full64` (open lane, pilot 2, round 4), term for term:
-`pair a m` is `box m a a`, `rpair a m` is `refined [a, m]`, `exact a m` is `exact [a, m]`.
+`pair a m wd` is `box m a a wd`, `rpair a m` is `refined [a, m]`, `exact a m` is `exact [a, m]`.
 `Full64` certified the inputs `[6, 7]` and `[7, 6]` with the forward pass it ran to bound the
 weights' lengths; under policy v4 the lengths are read for free, so `exact [6, 7]` certifies them.
 

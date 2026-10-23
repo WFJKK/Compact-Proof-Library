@@ -10,18 +10,20 @@ The specification is CompactCheck's, pinned to commit `56f82f2` of
 [Auto-Research-Compact-Proof-in-Lean](https://github.com/WFJKK/Auto-Research-Compact-Proof-in-Lean):
 `Correct` and `numCorrect` in `Spec.lean`, the exact evaluator, and the counted language
 (`CountedOps.lean`, policy v4, where a checker reads the shape and the length of a weight for free).
-The entries prove theorems about those definitions, never about copies of them. Lean 4.35.0-rc4, Mathlib v4.35.0-rc4; every theorem depends on the standard axioms
-only (`propext`, `Classical.choice`, `Quot.sound`).
+The entries prove theorems about those definitions, never about copies of them. Lean 4.35.0-rc4,
+Mathlib v4.35.0-rc4; every theorem depends on the standard axioms only (`propext`,
+`Classical.choice`, `Quot.sound`).
 
 ## Entries and instances
 
 An entry's theorems hold for every size and every choice of weights. They say three things:
 
 * soundness: the checker never certifies more inputs than the network answers correctly;
-* cost: the checker's bill, as a formula in the sizes;
+* cost: the checker's bill, as a formula in the sizes (and, for entries 3 and 5, the plan);
 * count: which inputs the checker certifies, as a condition on the weights.
 
-The cost is the same for every network of the same sizes. The count is not: two networks of the
+The cost is the same for every network of the same sizes (and, for entries 3 and 5, the same plan).
+The count is not: two networks of the
 same sizes can answer any number of inputs correctly, depending on their trained weights. So a
 number of certified inputs comes from an instance: the kernel evaluates the checker on one network's
 weights, and soundness turns that into the open lane's target, "at least N inputs correct", at the
@@ -106,10 +108,7 @@ value, so the cost is a property of the method. It does not depend on `k` either
   (`instances/LinearMaxKInstances/`), and the acceptance service accepted and scored both; the
   receipts are in `instances/receipts/LinearMaxK/`. For the other rows, the bill and the length
   (they follow from `check_billed` and `bill_eq` for every well-formed network of these sizes),
-  while the certified counts were measured with `lake exe measure`, the same checker compiled, at
-  the previous pin. That checker also ran the network on the input with `V - 1` at every position
-  and certified nothing if the answer was wrong; on these networks it was right, so by
-  `check_billed` the counts are the same without it.
+  while the certified counts are measured with `lake exe measure`, the same checker compiled.
 * The length is the bill plus the number of weight entries, which the open lane charges once for
   extracting the weights. The brute force column is entry 2's length on the same network,
   `V^k (k d + d² + d V + V - 1)` plus the same extraction. (The zoo's `B` for these networks,
@@ -123,9 +122,9 @@ value, so the cost is a property of the method. It does not depend on `k` either
 
 ### Large instances
 
-The kernel cannot evaluate the checker on a `V = 64` network in one `decide`: the checker's 307,009
-charged operations, in exact rational arithmetic, ran out of memory at 8 GB. `Table.lean` splits the evaluation into
-small statements. The weights of an exported network are integers times a power of two, one exponent
+The kernel cannot evaluate the checker on a `V = 64` network in one `decide`: the checker's roughly
+300,000 charged operations, in exact rational arithmetic, ran out of memory at 8 GB. `Table.lean`
+splits the evaluation into small statements. The weights of an exported network are integers times a power of two, one exponent
 per tensor, so `M = 2^e · MZ` for the integer matrix `MZ` of the mantissas, and every test has the
 same outcome on `MZ` as on `M`. An instance then proves, each by its own `decide`, one theorem per row
 of `MZ` and one per group's tests, and `check_billed_of_table` assembles them.
@@ -283,8 +282,8 @@ sorted inputs, and counts their reorderings if its test passes. For inputs whose
 * `exact x`: the logits of `x`, the sum of the columns of its tokens, and one comparison of logit
   `m` with the largest of the others.
 
-For `k = 2` these are `Full64`'s four tests: its `pair a m` is `box m a a`, its `rpair a m` is
-`refined [a, m]`, its `exact a m` is `exact [a, m]`. The tests are sufficient, not exact: a box can
+For `k = 2` these are `Full64`'s four tests: its `pair a m wd` is `box m a a wd`, its `rpair a m`
+is `refined [a, m]`, its `exact a m` is `exact [a, m]`. The tests are sufficient, not exact: a box can
 fail where every input is answered correctly, and then a refined or an exact test can take over.
 
 The plan is public data, fixed with the checker. The checker checks it first: a box has
@@ -295,8 +294,8 @@ terms. For an invalid plan it certifies nothing.
 
 * `check_sound` (`Sound.lean`): for every graph of the family, every plan, all weights and all
   certificates, the count is at most `numCorrect`.
-* `check_billed`: on well-formed weights and a valid plan, the count is the sum of the sizes of the
-  terms whose tests pass, and the bill is `billPlan V k d plan`:
+* `check_billed`: on well-formed weights, `V > 0` and a valid plan, the count is the sum of the
+  sizes of the terms whose tests pass, and the bill is `billPlan V k d plan`:
 
   | part | operations |
   | --- | --- |
@@ -322,15 +321,21 @@ weights' lengths; under policy v4 the lengths are free, and `exact [6, 7]` certi
 receipt is in `instances/receipts/LinearMaxKColumnMax/`: description size 7,404 of a budget of
 8,512 (`Full64`'s own, written for this network only, was 7,502).
 
-On the same network entry 1 certifies the same 64 inputs for a bill of 1,001 (length 1,081): entry 5
-is 39% shorter, with every operation charged as entry 1's are. The gain is in the method, not in the
-accounting: a pair costs one comparison against the column summaries instead of one per wrong
-output. It also grows with `V`. On `max2-v64-s0`, the cheapest passing term for each input (766
-boxes, 594 refined tests, 656 exact tests and one diagonal test; the other diagonal inputs come with
-boxes) certifies 4,095 inputs, entry 1's count, for a bill of 129,369 (length 130,457) against entry
-1's 307,009 (308,097). That is a measurement: `scripts/column_max_plan.py` writes the plan and a Lean
-file that runs the checker on the network with `#eval`; no kernel-checked instance yet. On the tiny
-network the same script writes a plan of the same bill as `Full64`'s, 581.
+On the same network entry 1 certifies the same 64 inputs for a bill of 1,001 (length 1,081), so
+entry 5 is 39% shorter. Every operation on the network's numbers is charged as in entry 1. The plan,
+as in entry 3, is free structure in the checker, bounded by the description-size budget; here it
+takes 661 of the 7,404. What the plan buys is the max rule: a pair costs one comparison against the
+column summaries instead of one per other output.
+
+At `V = 64` the plan is the open question. `scripts/column_max_plan.py` writes the cheapest passing
+term for each input of `max2-v64-s0`: 766 boxes, 594 refined tests, 656 exact tests and one diagonal
+test (`diag 13`). 62 diagonal inputs come with boxes; `(0, 0)`, which the network answers wrongly,
+with none. Run in Lean with `#eval`, the checker certifies 4,095 inputs, entry 1's count, for a bill
+of 129,369 (length 130,457) against entry 1's 307,009 (308,097). But that plan has 2,017 terms and a
+description size of 63,693, against a budget of 12,544, so the service would refuse it: this is a
+measurement, not a result the open lane would score. Whether a plan that fits the budget keeps much
+of the gain is open; the per-pair choices alone carry about 3,200 bits. On the tiny network the
+script writes `Full64`'s plan itself.
 
 ## Layout
 
@@ -398,8 +403,9 @@ with the checker's own reader.
 
 ## Next
 
-* Kernel-checked instances of entry 5 at `V = 64`, with the plan `scripts/column_max_plan.py`
-  writes and the tests evaluated on the integer table, as entry 1's large instances do.
+* Entry 5 at `V = 64` within the description-size budget: a plan that fits (fewer, larger boxes,
+  or a compact encoding of the per-pair choices, decoded by free code), then a kernel-checked
+  instance with the tests on the integer table, as entry 1's large instances do.
 * Gross et al.'s hand-written proofs for the attention max-of-k transformer, which need the counted
   language's bounds on `exp` and `softmax`.
 * Kernel-checked instances of entry 1 for the other development seeds and for `V = 128`, with

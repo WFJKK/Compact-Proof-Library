@@ -37,8 +37,8 @@ whose largest token is `m`:
 * `exact x`, the reorderings of `x`: its logits, the sum of the columns of its tokens, and one
   comparison of logit `m` with the largest of the others.
 
-For `k = 2` these are `Full64`'s four tests: `diag m`; `pair a m` is `box m a a`; `rpair a m` is
-`refined [a, m]`; `exact a m` is `exact [a, m]`.
+For `k = 2` these are `Full64`'s four tests: `diag m`; `pair a m wd` is `box m a a wd`;
+`rpair a m` is `refined [a, m]`; `exact a m` is `exact [a, m]`.
 
 The checker reads the shapes and lengths of the weights (free) and checks the plan (free, it is
 public data). Then it computes the columns, their summaries and the tests.
