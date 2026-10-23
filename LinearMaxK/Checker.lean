@@ -3,16 +3,15 @@ import LinearMaxK.Family
 /-!
 # The checker: the exact group method, in the counted language
 
-A checker of the counted language (version 4, `CompactCheck/CountedOps.lean`): it is written
+A checker of the counted language (`CompactCheck/CountedOps.lean`, policy v4): it is written
 for every interpreter `I`, touches the network's numbers only through `I`'s charged operations,
-and never branches on a truth value. Its only branches are on public structure: the graph's sizes
-and the weights' shapes.
+and never branches on a truth value. Its only branches are on public structure: the graph's sizes,
+and the weights' shapes and lengths, which are free to read.
 
 The method, for a network of the family with `k` positions, `V` tokens and width `d`:
 
-1. One forward pass on the input `(V - 1, ..., V - 1)` (`I.single`). The counted language cannot
-   read a tensor's length, and a forward pass that succeeds shows the weights have the sizes their
-   shapes say. Its result gates every count, so it costs one gate per group.
+1. The shapes and the lengths of `E`, `L` and `U` must be `[d, V]`, `[d, d]`, `[V, d]` and
+   `d V`, `d d`, `V d`; otherwise the checker certifies nothing.
 2. Every column of `M = U L E`: column `t` reads column `t` of `E` (free), then applies `L` (`d^2`
    multiply-adds) and `U` (`V d`).
 3. For every group `m` (inputs whose largest token is `m`) and every other output `j`, with
@@ -34,11 +33,15 @@ namespace LinearMaxK
 
 open CompactCheck Common
 
+/-- The public check on the weights' shapes and lengths. -/
+def wellFormed (V d : ℕ) (sE sL sU : List ℕ) (lE lL lU : ℕ) : Bool :=
+  sE == [d, V] && sL == [d, d] && sU == [V, d] && lE == d * V && lL == d * d && lU == V * d
+
 section Checker
 
 variable (I : Interp)
 
-/-- The category of every charge but the guard's. -/
+/-- The category of every charge. -/
 def cat : String := "m"
 
 /-- Entries `is` of the weight `name`. -/
@@ -109,27 +112,27 @@ def groupTest (cols : List (List I.V)) (km1 : I.V) (m : ℕ) : List ℕ → I.M 
       let r ← groupTest cols km1 m js
       I.band cat b r
 
-/-- The count of the groups `ms`: each group's size if its tests and the guard pass. -/
-def countGroups (cols : List (List I.V)) (km1 : I.V) (ok0 : I.B) (k V : ℕ) :
-    List ℕ → I.M I.N
+/-- The count of the groups `ms`: each group's size if its tests pass. -/
+def countGroups (cols : List (List I.V)) (km1 : I.V) (k V : ℕ) : List ℕ → I.M I.N
   | [] => pure I.nzero
   | m :: ms => do
     let b ← groupTest I cols km1 m (List.range V)
-    let bb ← I.band cat ok0 b
-    let n ← countGroups cols km1 ok0 k V ms
-    pure (I.nadd (I.nscale (Nat.pow (m + 1) k - Nat.pow m k) bb) n)
+    let n ← countGroups cols km1 k V ms
+    pure (I.nadd (I.nscale (Nat.pow (m + 1) k - Nat.pow m k) b) n)
 
 /-- The checker, for the graph `g` and the task `task`. -/
-def check (g : Graph) (task : Task) : I.M I.N := do
+def check (g : Graph) (_task : Task) : I.M I.N := do
   let sE ← I.weightShape nE
   let sL ← I.weightShape nL
   let sU ← I.weightShape nU
+  let lE ← I.weightSize nE
+  let lL ← I.weightSize nL
+  let lU ← I.weightSize nU
   let d := sE.headD 0
-  if sE == [d, g.values] && sL == [d, d] && sU == [g.values, d] then do
-    let ok0 ← I.single g task (List.replicate g.positions (g.values - 1))
+  if wellFormed g.values d sE sL sU lE lL lU then do
     let cols ← columns I g.values d (List.range g.values)
     let km1 ← I.lit cat (g.positions - 1)
-    countGroups I cols km1 ok0 g.positions g.values (List.range g.values)
+    countGroups I cols km1 g.positions g.values (List.range g.values)
   else pure I.nzero
 
 end Checker

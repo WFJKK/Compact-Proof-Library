@@ -12,7 +12,7 @@ it there, belongs to the piece and has margin `D(m) + A + (k - 2) B`. So the tes
 iff the network answers every input of the piece correctly (`pieceOk_iff`).
 
 * `check_billed`: on well-formed weights and a valid plan, the count is the sum of the sizes of the
-  pieces whose tests pass, if the guard input is answered correctly, and the bill is `billPlan`.
+  pieces whose tests pass, and the bill is `billPlan`.
 * `check_groups`: the plan of all whole groups is entry 1: the same count, and a bill of one more
   (the literal `k - 2`).
 -/
@@ -143,17 +143,15 @@ theorem pieceOk_iff {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ}
   · simp [hjm, pieceOkPair_of_correct hg hw hv hshape (List.mem_range.mp hj) hjm h]
 
 /-- **Count and cost.** On well-formed weights and a valid plan: the count is the sum of the sizes
-    of the pieces whose tests pass, if the guard input is answered correctly, and the bill is
-    `billPlan k V d plan`, whatever the weights' values. -/
-theorem check_billed {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ}
-    (hw : WF w g.values d tE tL tU) {plan : List Piece} (hplan : planOk g.values plan = true)
-    (c : Cert) :
+    of the pieces whose tests pass, and the bill is `billPlan V d plan`, whatever the weights'
+    values. -/
+theorem check_billed {g : Graph} {w : Weights ℚ} (hw : WF w g.values d tE tL tU)
+    {plan : List Piece} (hplan : planOk g.values plan = true) (c : Cert) :
     CostM.billed (check Interp.counting plan g (maxTask g.positions g.values)) ⟨w, c⟩ =
       some ((plan.map fun p =>
-        cond (singleOk g w (maxTask g.positions g.values) (guardInput g) &&
-          pieceOk tE tL tU g.values d g.positions p) (p.size g.positions) 0).sum,
-        billPlan g.positions g.values d plan) :=
-  (runs_check (env := ⟨w, c⟩) hg hw hplan).billed
+        cond (pieceOk tE tL tU g.values d g.positions p) (p.size g.positions) 0).sum,
+        billPlan g.values d plan) :=
+  (runs_check (env := ⟨w, c⟩) hw hplan _).billed
 
 /-! ## The plan of whole groups -/
 
@@ -185,11 +183,11 @@ theorem planOk_groups (V : ℕ) : planOk V (groups V) = true := by
     simp [Piece.valid]; omega
 
 /-- The plan of whole groups costs entry 1's bill and one literal more. -/
-theorem billPlan_groups (k V d : ℕ) : billPlan k V d (groups V) = bill k V d + 1 := by
+theorem billPlan_groups (V d : ℕ) : billPlan V d (groups V) = bill V d + 1 := by
   simp only [billPlan, bill, groups, List.map_map, Function.comp_def, pairCost, ↓reduceIte,
     Nat.sub_zero]
-  have : ((List.range V).map fun m => (V - 1) * (2 * m + 3 + 1) + 1) =
-      (List.range V).map fun m => (V - 1) * (2 * m + 4) + 1 := by
+  have : ((List.range V).map fun m => (V - 1) * (2 * m + 3 + 1)) =
+      (List.range V).map fun m => (V - 1) * (2 * m + 4) := by
     refine List.map_congr_left fun m _ => ?_
     ring_nf
   rw [this]
@@ -207,13 +205,12 @@ theorem size_group (k m : ℕ) : Piece.size k ⟨m, 0, m⟩ = Nat.pow (m + 1) k 
 
 /-- **The plan of whole groups is entry 1**: on well-formed weights, the same count as entry 1's
     checker, and a bill of one more. -/
-theorem check_groups {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ}
-    (hw : WF w g.values d tE tL tU) (c : Cert) :
+theorem check_groups {g : Graph} {w : Weights ℚ} (hw : WF w g.values d tE tL tU) (c : Cert) :
     CostM.billed (check Interp.counting (groups g.values) g (maxTask g.positions g.values)) ⟨w, c⟩ =
       (CostM.billed (LinearMaxK.check Interp.counting g (maxTask g.positions g.values)) ⟨w, c⟩).map
         fun r => (r.1, r.2 + 1) := by
-  rw [check_billed hg hw (planOk_groups g.values) c,
-    (LinearMaxK.runs_check (env := ⟨w, c⟩) hg hw).billed, billPlan_groups]
+  rw [check_billed hw (planOk_groups g.values) c,
+    (LinearMaxK.runs_check (env := ⟨w, c⟩) hw _).billed, billPlan_groups]
   simp only [Option.map_some, groups, List.map_map, Function.comp_def, pieceOk_group, size_group]
 
 end LinearMaxKPlans

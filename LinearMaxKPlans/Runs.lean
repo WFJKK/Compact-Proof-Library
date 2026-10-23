@@ -49,18 +49,14 @@ end Tests
 /-- The operations of one test of the piece `p`. -/
 def pairCost (p : Piece) : ℕ := if p.hi = p.m then 2 * (p.m - p.lo) + 3 else 2 * (p.m - p.lo) + 4
 
-/-- The bill of the plan: the guard's forward pass, the columns, the literals `k - 1` and `k - 2`,
-    and for each piece its tests, a gate per test, and a gate with the guard. -/
-def billPlan (k V d : ℕ) (plan : List Piece) : ℕ :=
-  (k * d + d * d + d * V + (V - 1)) + V * (d * d + V * d) + 2 +
-    (plan.map fun p => (V - 1) * (pairCost p + 1) + 1).sum
+/-- The bill of the plan: the columns, the literals `k - 1` and `k - 2`, and for each piece its
+    tests, with a gate per test. -/
+def billPlan (V d : ℕ) (plan : List Piece) : ℕ :=
+  V * (d * d + V * d) + 2 + (plan.map fun p => (V - 1) * (pairCost p + 1)).sum
 
 section
 
 variable {env : Env} {V d : ℕ} {tE tL tU : Tensor ℚ}
-
-theorem runs_add (cat : String) (a b : Q) : Runs (CostM.qadd cat a b) env ⟨a.val + b.val⟩ 1 :=
-  fun c => ⟨c.add cat 1, rfl, Cost.total_add _ _ _⟩
 
 theorem runs_pieceTest {k : ℕ} {p : Piece} (hv : p.valid V = true) {j : ℕ} (hj : j < V) :
     Runs (pieceTest K (colsQ tE tL tU V d) ⟨((k - 1 : ℕ) : ℚ)⟩ ⟨((k - 2 : ℕ) : ℚ)⟩ p j) env
@@ -119,11 +115,11 @@ theorem valid_of_planOk {p : Piece} : ∀ {plan : List Piece}, planOk V plan = t
     · exact h.1.1
     · exact valid_of_planOk h.2 hp
 
-theorem runs_countPieces {k : ℕ} (ok0 : Bool) :
+theorem runs_countPieces {k : ℕ} :
     ∀ (ps : List Piece), (∀ p ∈ ps, p.valid V = true) →
-      Runs (countPieces K (colsQ tE tL tU V d) ⟨((k - 1 : ℕ) : ℚ)⟩ ⟨((k - 2 : ℕ) : ℚ)⟩ ok0 k V ps)
-        env ((ps.map fun p => cond (ok0 && pieceOk tE tL tU V d k p) (p.size k) 0).sum)
-        ((ps.map fun p => (V - 1) * (pairCost p + 1) + 1).sum)
+      Runs (countPieces K (colsQ tE tL tU V d) ⟨((k - 1 : ℕ) : ℚ)⟩ ⟨((k - 2 : ℕ) : ℚ)⟩ k V ps)
+        env ((ps.map fun p => cond (pieceOk tE tL tU V d k p) (p.size k) 0).sum)
+        ((ps.map fun p => (V - 1) * (pairCost p + 1)).sum)
   | [], _ => (Runs.pure _).congr rfl rfl
   | p :: ps, hp => by
     have hv := hp p List.mem_cons_self
@@ -131,33 +127,31 @@ theorem runs_countPieces {k : ℕ} (ok0 : Bool) :
       simp only [Piece.valid, Bool.and_eq_true, Nat.ble_eq, Nat.blt_eq] at hv; exact hv.2
     simp only [countPieces, Interp.counting_bind, Interp.counting_pure]
     exact Runs.bind' (runs_pieceTests (k := k) hv (List.range V) fun j hj => List.mem_range.mp hj)
-      (Runs.bind' (runs_band cat _ _)
-        (Runs.bind' (runs_countPieces ok0 ps fun q hq => hp q (List.mem_cons_of_mem _ hq))
-          (Runs.pure _) rfl rfl) rfl rfl)
-      (by simp [pieceOk]) (by simp [countP_ne, hmV]; ring)
+      (Runs.bind' (runs_countPieces ps fun q hq => hp q (List.mem_cons_of_mem _ hq))
+        (Runs.pure _) rfl rfl)
+      (by simp [pieceOk]) (by simp [countP_ne, hmV])
 
 /-- What the checker of a valid plan does on a network of the family with well-formed weights: its
-    count, from the guard and the pieces' tests, and its bill. -/
-theorem runs_check {g : Graph} (hg : IsLinearMaxK g = true)
-    (hw : WF env.weights g.values d tE tL tU) {plan : List Piece}
-    (hplan : planOk g.values plan = true) :
-    Runs (check K plan g (maxTask g.positions g.values)) env
+    count, from the pieces' tests, and its bill. -/
+theorem runs_check {g : Graph} (hw : WF env.weights g.values d tE tL tU) {plan : List Piece}
+    (hplan : planOk g.values plan = true) (task : Task) :
+    Runs (check K plan g task) env
       ((plan.map fun p =>
-        cond (singleOk g env.weights (maxTask g.positions g.values) (guardInput g) &&
-          pieceOk tE tL tU g.values d g.positions p) (p.size g.positions) 0).sum)
-      (billPlan g.positions g.values d plan) := by
+        cond (pieceOk tE tL tU g.values d g.positions p) (p.size g.positions) 0).sum)
+      (billPlan g.values d plan) := by
   simp only [check, Interp.counting_bind]
   refine Runs.bind0 (runs_weightShape hw.hE) ?_
   refine Runs.bind0 (runs_weightShape hw.hL) ?_
   refine Runs.bind0 (runs_weightShape hw.hU) ?_
-  simp only [hw.hEs, hw.hLs, hw.hUs, List.headD_cons, beq_self_eq_true, Bool.and_self, hplan,
-    ↓reduceIte]
-  exact Runs.bind' (runs_single (singleCost_family hg hw))
-    (Runs.bind' (runs_columns hw fun t ht => List.mem_range.mp ht)
+  refine Runs.bind0 (runs_weightSize hw.hE) ?_
+  refine Runs.bind0 (runs_weightSize hw.hL) ?_
+  refine Runs.bind0 (runs_weightSize hw.hU) ?_
+  have hd : tE.shape.headD 0 = d := by rw [hw.hEs]; rfl
+  simp only [hd, wellFormed_of_WF hw, hplan, Bool.and_self, ↓reduceIte]
+  exact Runs.bind' (runs_columns hw fun t ht => List.mem_range.mp ht)
+    (Runs.bind' (runs_lit cat _)
       (Runs.bind' (runs_lit cat _)
-        (Runs.bind' (runs_lit cat _)
-          (runs_countPieces _ plan fun p hp => valid_of_planOk hplan hp) rfl rfl)
-        rfl rfl)
+        (runs_countPieces plan fun p hp => valid_of_planOk hplan hp) rfl rfl)
       rfl rfl)
     rfl (by simp [billPlan]; ring)
 

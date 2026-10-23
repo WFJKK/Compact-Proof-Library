@@ -20,20 +20,20 @@
   {
    "step": "protected",
    "module": "Protected.N_max2_tiny_v8_s0_c20",
-   "cached": false
+   "cached": true
   },
   {
    "step": "compile",
    "module": "Candidate.Common.Basic",
    "rc": 0,
-   "seconds": 2.5,
+   "seconds": 2.6,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Family",
    "rc": 0,
-   "seconds": 3.1,
+   "seconds": 2.8,
    "timed_out": false
   },
   {
@@ -47,42 +47,42 @@
    "step": "compile",
    "module": "Candidate.LinearMaxK.Groups",
    "rc": 0,
-   "seconds": 2.5,
+   "seconds": 2.6,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Runs",
    "rc": 0,
-   "seconds": 4.1,
+   "seconds": 4.3,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Sound",
    "rc": 0,
-   "seconds": 2.4,
+   "seconds": 2.3,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxKPlans.Pieces",
    "rc": 0,
-   "seconds": 2.8,
+   "seconds": 2.5,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxKPlans.Checker",
    "rc": 0,
-   "seconds": 2.3,
+   "seconds": 2.0,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxKPlans.Runs",
    "rc": 0,
-   "seconds": 2.7,
+   "seconds": 2.5,
    "timed_out": false
   },
   {
@@ -96,13 +96,13 @@
    "step": "compile",
    "module": "Candidate.LinearMaxKPlansMax2TinyBudget",
    "rc": 0,
-   "seconds": 3.2,
+   "seconds": 2.7,
    "timed_out": false
   },
   {
    "step": "kernel",
    "rc": 0,
-   "seconds": 4.3,
+   "seconds": 3.7,
    "timed_out": false
   },
   {
@@ -114,58 +114,59 @@
   {
    "step": "score",
    "rc": 0,
-   "seconds": 4.5,
+   "seconds": 3.6,
    "timed_out": false
   }
  ],
  "digests": {
-  "commit": "c11b8e40f3c8d9b78ff144de8c1edb66dc3e75bb",
+  "commit": "56f82f25ebd2e9bded57376422002e6c09129acf",
   "toolchain": "lean:bf8d54e4714cc4b0",
-  "lean_project": "d36f4fb12b0bb567",
-  "policy": "cde74948a64643d3",
-  "acceptcheck": "ae878fc22796d840",
+  "lean_project": "fb26bd712c9dea8b",
+  "policy": "c12ddaec11234e64",
+  "acceptcheck": "609e9ba36f338592",
   "modules": {
-   "Candidate.Common.Basic": "4c3283befc2cc83fa3a1301c1d14e392e5c24a81c3dac732e38ef16df971b15e",
-   "Candidate.LinearMaxK.Checker": "8a597cef6916d2b91172c0116a982e6a3cba71e1e2c9064721bed91890910d31",
-   "Candidate.LinearMaxK.Family": "f4f8addb0b43b8e3c128f1a16f7d76ef00a48ebbbeea83ba0cf189e0706885bc",
+   "Candidate.Common.Basic": "f6381de3dc68f5819373e2d2588e03e565d0563ee2bb7bfb668e0487be532392",
+   "Candidate.LinearMaxK.Checker": "9ad11244474369bae896e075c93ca0178b7da4c2db9e733433c9d80eb464793a",
+   "Candidate.LinearMaxK.Family": "b1789afba0bec180d726ea2fc8dbe35cc56cd1cc99ed5ee82193268436da2401",
    "Candidate.LinearMaxK.Groups": "f7cc2fd139b9ce34d616f4afa77fdc2c89abe6530c8822dcfb49aa9813f63b1e",
-   "Candidate.LinearMaxK.Runs": "7e5ba8a63f1df5f924903e8b49149f198473898490a912041fadfe73831f1487",
-   "Candidate.LinearMaxK.Sound": "908ed0b0750683448cca3a7c2e2ac5273a00af38d651c0686232b9c41668aebf",
-   "Candidate.LinearMaxKPlans.Checker": "017bb7dc91793c86d2e1e77d51a1d1c96fc000462000ba0867b798e7b5f68a25",
+   "Candidate.LinearMaxK.Runs": "0605b2ea314c7f5173280473fce0f90e89c7ff73a76f97671d6fbe2a38e39c3f",
+   "Candidate.LinearMaxK.Sound": "5e6c78eee89c1439766abc93f7688c595ffab5fb9ae89033da3e107003ec60eb",
+   "Candidate.LinearMaxKPlans.Checker": "4fb820177c2cb6bbe60bb9c23ebb521cdca47f4f16b580c2b1e2e36186f3fa50",
    "Candidate.LinearMaxKPlans.Pieces": "3503ff1ead09c209d63dc379faf9ef63850d40b66bc738331d7b1846f5528b36",
-   "Candidate.LinearMaxKPlans.Runs": "9e8b443f1696cba0b75280c838d97bbb82f5708e7922798346f3a703b25465fe",
-   "Candidate.LinearMaxKPlans.Sound": "3b7f86f3482364c95dcb39b633942696b1eeadda56c764d8cfb5d77b1f10df72",
-   "Candidate.LinearMaxKPlansMax2TinyBudget": "54549959f74dcbcb4eca04343dd5039df6621150cfbc2dda37d54a96ed0a9c9d"
+   "Candidate.LinearMaxKPlans.Runs": "869349e95fc647e54bb786573d5a640aa64bc6ea9bb5152b16ce0aaaeb1d7cc5",
+   "Candidate.LinearMaxKPlans.Sound": "ccf93eb296fb3462fe7e3df7a800e5f1e94c185c121f6a7a298cc229e486a699",
+   "Candidate.LinearMaxKPlansMax2TinyBudget": "af77a45d19af1d87726ea7f5cb6de77223ee346b6dde08cbc21f5d0608767496"
   },
   "network_file": "af7beeae9cfa75951c881d4ec320d6384648984033f33209eb2bcfcb05557346"
  },
  "score_eligible": true,
  "execution_assurance": "kernel_checked_instance",
  "cost_model": "cost-v3",
+ "policy_version": "open-lane-policy-v4",
  "scoring": {
   "status": "scored",
   "reason": null,
   "assurance": "kernel_checked_instance",
   "cost_model": "cost-v3",
-  "bill": 633,
+  "bill": 568,
   "extract": 80,
   "read": 0,
-  "length": 713,
-  "description_size": 5506,
+  "length": 648,
+  "description_size": 5524,
   "size_budget": 8512,
-  "general_kernel_ms": 989,
+  "general_kernel_ms": 745,
   "general_kernel_budget_ms": 120000,
-  "rest_kernel_ms": 1408,
+  "rest_kernel_ms": 929,
   "axioms": [
    "propext",
    "Classical.choice",
    "Quot.sound"
   ],
   "closure_visited": 120,
-  "general_constants": 296,
-  "checker_constants": 43
+  "general_constants": 280,
+  "checker_constants": 44
  },
- "seconds": 47.4,
- "time": "2026-10-23T10:43:57+0100",
- "replayed_constants": 535
+ "seconds": 40.3,
+ "time": "2026-10-23T12:50:28+0100",
+ "replayed_constants": 521
 }

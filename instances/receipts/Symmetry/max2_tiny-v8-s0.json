@@ -26,7 +26,7 @@
    "step": "compile",
    "module": "Candidate.Common.Basic",
    "rc": 0,
-   "seconds": 2.5,
+   "seconds": 2.4,
    "timed_out": false
   },
   {
@@ -40,40 +40,40 @@
    "step": "compile",
    "module": "Candidate.LinearMaxK.Groups",
    "rc": 0,
-   "seconds": 2.2,
+   "seconds": 2.8,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.Symmetry.Sorted",
    "rc": 0,
-   "seconds": 2.5,
+   "seconds": 2.8,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.Symmetry.Checker",
    "rc": 0,
-   "seconds": 2.5,
+   "seconds": 2.4,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.SymmetryMax2Tiny",
    "rc": 0,
-   "seconds": 11.8,
+   "seconds": 13.3,
    "timed_out": false
   },
   {
    "step": "kernel",
    "rc": 0,
-   "seconds": 12.1,
+   "seconds": 12.8,
    "timed_out": false
   },
   {
    "step": "closure",
    "rc": 0,
-   "seconds": 1.4,
+   "seconds": 1.3,
    "timed_out": false
   },
   {
@@ -84,14 +84,14 @@
   }
  ],
  "digests": {
-  "commit": "c11b8e40f3c8d9b78ff144de8c1edb66dc3e75bb",
+  "commit": "56f82f25ebd2e9bded57376422002e6c09129acf",
   "toolchain": "lean:bf8d54e4714cc4b0",
-  "lean_project": "d36f4fb12b0bb567",
-  "policy": "cde74948a64643d3",
-  "acceptcheck": "ae878fc22796d840",
+  "lean_project": "fb26bd712c9dea8b",
+  "policy": "c12ddaec11234e64",
+  "acceptcheck": "609e9ba36f338592",
   "modules": {
-   "Candidate.Common.Basic": "4c3283befc2cc83fa3a1301c1d14e392e5c24a81c3dac732e38ef16df971b15e",
-   "Candidate.LinearMaxK.Family": "f4f8addb0b43b8e3c128f1a16f7d76ef00a48ebbbeea83ba0cf189e0706885bc",
+   "Candidate.Common.Basic": "f6381de3dc68f5819373e2d2588e03e565d0563ee2bb7bfb668e0487be532392",
+   "Candidate.LinearMaxK.Family": "b1789afba0bec180d726ea2fc8dbe35cc56cd1cc99ed5ee82193268436da2401",
    "Candidate.LinearMaxK.Groups": "f7cc2fd139b9ce34d616f4afa77fdc2c89abe6530c8822dcfb49aa9813f63b1e",
    "Candidate.Symmetry.Checker": "1ccd8ab94abea1fa18eec36411ea145d5131b69b3ebc68b280edbbfa64d1b835",
    "Candidate.Symmetry.Sorted": "1b0d158320620293c5096dfdab2c0504d11bf574868634c1c04830db6297b4bf",
@@ -102,6 +102,7 @@
  "score_eligible": true,
  "execution_assurance": "kernel_checked_instance",
  "cost_model": "cost-v3",
+ "policy_version": "open-lane-policy-v4",
  "scoring": {
   "status": "scored",
   "reason": null,
@@ -113,9 +114,9 @@
   "length": 2348,
   "description_size": 917,
   "size_budget": 8512,
-  "general_kernel_ms": 154,
+  "general_kernel_ms": 162,
   "general_kernel_budget_ms": 120000,
-  "rest_kernel_ms": 11230,
+  "rest_kernel_ms": 11172,
   "axioms": [
    "propext",
    "Classical.choice",
@@ -125,7 +126,7 @@
   "general_constants": 61,
   "checker_constants": 11
  },
- "seconds": 53.5,
- "time": "2026-10-23T10:57:42+0100",
- "replayed_constants": 269
+ "seconds": 56.3,
+ "time": "2026-10-23T12:51:08+0100",
+ "replayed_constants": 263
 }

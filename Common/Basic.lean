@@ -165,6 +165,18 @@ theorem runs_weightShape {name : String} {t : Tensor ℚ}
   intro c
   exact ⟨c, by simp [CostM.weightShape, h], by simp⟩
 
+theorem runs_weightSize {name : String} {t : Tensor ℚ}
+    (h : List.lookup name env.weights = some t) :
+    Runs (CostM.weightSize name) env t.data.size 0 := by
+  intro c
+  exact ⟨c, by simp [CostM.weightSize, h], by simp⟩
+
+theorem weightSize_some {name : String} {n : ℕ} {c c' : Cost}
+    (h : (CostM.weightSize name).run env c = some (n, c')) :
+    ∃ t, List.lookup name env.weights = some t ∧ t.data.size = n := by
+  obtain ⟨t, ht, hn, -⟩ := CostM.weightSize_spec h
+  exact ⟨t, ht, hn⟩
+
 theorem weightShape_some {name : String} {s : List ℕ} {c c' : Cost}
     (h : (CostM.weightShape name).run env c = some (s, c')) :
     ∃ t, List.lookup name env.weights = some t ∧ t.shape = s := by
@@ -187,7 +199,13 @@ theorem runs_muladd (cat : String) (acc a b : Q) :
     Runs (CostM.qmuladd cat acc a b) env ⟨acc.val + a.val * b.val⟩ 1 :=
   fun c => ⟨c.add cat 1, rfl, Cost.total_add _ _ _⟩
 
+theorem runs_add (cat : String) (a b : Q) : Runs (CostM.qadd cat a b) env ⟨a.val + b.val⟩ 1 :=
+  fun c => ⟨c.add cat 1, rfl, Cost.total_add _ _ _⟩
+
 theorem runs_sub (cat : String) (a b : Q) : Runs (CostM.qsub cat a b) env ⟨a.val - b.val⟩ 1 :=
+  fun c => ⟨c.add cat 1, rfl, Cost.total_add _ _ _⟩
+
+theorem runs_max (cat : String) (a b : Q) : Runs (CostM.qmax cat a b) env ⟨max a.val b.val⟩ 1 :=
   fun c => ⟨c.add cat 1, rfl, Cost.total_add _ _ _⟩
 
 theorem runs_min (cat : String) (a b : Q) : Runs (CostM.qmin cat a b) env ⟨min a.val b.val⟩ 1 :=

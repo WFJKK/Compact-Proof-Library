@@ -14,8 +14,7 @@ through `LinearMaxK.check_billed_of_table`, in small steps that the kernel check
   by `rfl`; the recursion limit is raised for these three, to unfold lists of hundreds of entries);
 * the rows of `MZ = U L E` over the integers are the table `rows` (`row_0`, ..., one `decide` each);
 * the tests of each group on the table come out as the list `outcomes` (`group_0`, ..., one
-  `decide` each);
-* the guard input is answered correctly, as the table shows (`guard`, one `decide`).
+  `decide` each).
 
 Written by `scripts/make_table_instance.py`.
 -/
@@ -2144,18 +2143,16 @@ theorem hgroups : ∀ m < 64, groupOkZ rows 2 64 m = outcomes.getD m false
   | 63, _ => group_63
   | _ + 64, h => absurd h (by omega)
 
-/-! ## The guard, and the instance -/
-
-theorem guard : guardOkZ rows 64 = true := by decide +kernel
+/-! ## The instance -/
 
 theorem hEn : mE.length = 8 * 64 := by decide +kernel
 theorem hLn : mL.length = 8 * 8 := by decide +kernel
 theorem hUn : mU.length = 64 * 8 := by decide +kernel
 
-theorem D_instance : CostM.billed (D Interp.counting) ⟨weights, cert⟩ = some (4095, 307728) := by
+theorem D_instance : CostM.billed (D Interp.counting) ⟨weights, cert⟩ = some (4095, 307009) := by
   have h : CostM.billed (D Interp.counting) ⟨weights, cert⟩ =
-      some (countZ rows 2 64, bill 2 64 8) :=
-    check_billed_of_table (g := graph) (by decide) hE hL hU hEn hLn hUn hrows guard cert
+      some (countZ rows 2 64, bill 64 8) :=
+    check_billed_of_table (g := graph) hE hL hU hEn hLn hUn hrows cert
   rw [h, countZ_eq outcomes hgroups]
   decide +kernel
 

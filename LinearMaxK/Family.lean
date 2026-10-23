@@ -79,14 +79,6 @@ theorem linearOp_spec {W t : Tensor ℚ} {out inn : ℕ}
   · rw [get_map_range (by omega), sum_range_eq]
     simp [Nat.mod_eq_of_lt hj, Nat.div_eq_of_lt hj]
 
-theorem linearOp_size {W t r : Tensor ℚ} {b : Option (Tensor ℚ)} {out inn : ℕ}
-    (hWs : W.shape = [out, inn]) (h : linearOp W b t = some r) : W.data.size = out * inn := by
-  unfold linearOp at h
-  rw [Option.ite_none_right_eq_some] at h
-  have hc := h.1
-  simp only [hWs, Bool.and_eq_true, beq_iff_eq, List.getD_cons_zero, List.getD_cons_succ] at hc
-  exact hc.1.1.2
-
 theorem div_mod_pos {p l V : ℕ} (hl : l < V) : (p * V + l) / V = p ∧ (p * V + l) % V = l := by
   have hV : 0 < V := by omega
   constructor
@@ -176,39 +168,6 @@ theorem eval_family {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ} {
     unfold Mval
     rw [he3g j hj, ← sum_mul_list_sum]
     exact Finset.sum_congr rfl fun a ha => by rw [h2 a (Finset.mem_range.mp ha)]
-
-theorem evalGraph_of_singleOk {g : Graph} {w : Weights ℚ} {task : Task} {x : Input}
-    (h : singleOk g w task x = true) : ∃ out, evalGraph g w x = some out := by
-  unfold singleOk at h
-  split at h
-  · rename_i out hout; exact ⟨out, hout⟩
-  · cases h
-
-/-- Weights on which the network runs have the sizes their shapes say. -/
-theorem wf_of_eval {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ} {d : ℕ}
-    {tE tL tU : Tensor ℚ} (hE : List.lookup nE w = some tE) (hEs : tE.shape = [d, g.values])
-    (hL : List.lookup nL w = some tL) (hLs : tL.shape = [d, d])
-    (hU : List.lookup nU w = some tU) (hUs : tU.shape = [g.values, d]) {x : Input}
-    (hx : x.length = g.positions) (hxV : ∀ t ∈ x, t < g.values) {out : Tensor ℚ}
-    (h : evalGraph g w x = some out) : WF w g.values d tE tL tU := by
-  obtain ⟨hn, ho, -, -⟩ := isLinearMaxK_spec hg
-  obtain ⟨oh, h0, hohs, hohn, -⟩ := oneHot_spec hx hxV
-  obtain ⟨s, hs, -, -, -⟩ := sumOp_spec hohs hohn
-  simp only [evalGraph, hn, evalOps, evalOp, h0, List.push_toArray, List.nil_append,
-    List.size_toArray, List.length_cons, List.length_nil, zero_add, Order.lt_one_iff, getElem?_pos,
-    List.getElem_toArray, List.getElem_cons_zero, hs, List.cons_append, Nat.reduceAdd,
-    Order.lt_two_iff, Std.le_refl, List.getElem_cons_succ, hE, Nat.lt_add_one, hL, hU, ho] at h
-  cases h1 : linearOp tE none s with
-  | none => simp [h1] at h
-  | some v1 =>
-    cases h2 : linearOp tL none v1 with
-    | none => simp [h1, h2] at h
-    | some v2 =>
-      cases h3 : linearOp tU none v2 with
-      | none => simp [h1, h2, h3] at h
-      | some v3 =>
-        exact ⟨hE, hEs, linearOp_size hEs h1, hL, hLs, linearOp_size hLs h2, hU, hUs,
-          linearOp_size hUs h3⟩
 
 /-! ## The label, and what "correct" means here -/
 

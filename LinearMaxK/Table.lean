@@ -13,10 +13,8 @@ file splits the evaluation into small statements, each of which the kernel check
   of integers, one `decide` per row.
 * `groupOkZ` makes the tests of one group on the table, one `decide` per group.
 
-* `guardOkZ` checks the guard input on the table, in place of a forward pass.
-
-`check_billed_of_table` puts them together: on such weights, if the table's guard test passes, the
-checker's count is `countZ` of the table and its bill is `bill k V d`.
+`check_billed_of_table` puts them together: on such weights, the checker's count is `countZ` of the
+table and its bill is `bill V d`.
 -/
 
 namespace LinearMaxK
@@ -129,13 +127,6 @@ def pairOkZ (rows : List (List ℤ)) (k m j : ℕ) : Bool :=
 /-- The tests of the group `m`, on a table of rows. -/
 def groupOkZ (rows : List (List ℤ)) (k V m : ℕ) : Bool :=
   (List.range V).all fun j => decide (j = m) || pairOkZ rows k m j
-
-/-- The guard's test on a table of rows: in column `V - 1`, the entry of row `V - 1` is larger than
-    every other row's. Then the input `(V - 1, ..., V - 1)`, whose logits are `k` times column
-    `V - 1`, is answered correctly (`guard_correct`). -/
-def guardOkZ (rows : List (List ℤ)) (V : ℕ) : Bool :=
-  (List.range V).all fun j => decide (j = V - 1) ||
-    decide ((rows.getD j []).getD (V - 1) 0 < (rows.getD (V - 1) []).getD (V - 1) 0)
 
 /-- The checker's count, from the groups' tests on a table of rows. -/
 def countZ (rows : List (List ℤ)) (k V : ℕ) : ℕ :=
@@ -258,57 +249,27 @@ theorem groupOk_eq (hrows : ∀ j < V, rows.getD j [] = rowZ mE mL mU V d j) {k 
   refine forall₂_congr fun j hj => ?_
   rw [pairOk_eq hrows hm (List.mem_range.mp hj)]
 
-/-- On a table of the rows of `MZ`, the guard's test shows the guard input is answered correctly. -/
-theorem guard_correct {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ}
-    (hw : WF w g.values d (dyadicTensor sE mE eE) (dyadicTensor sL mL eL) (dyadicTensor sU mU eU))
-    (hrows : ∀ j < g.values, rows.getD j [] = rowZ mE mL mU g.values d j)
-    (hguard : guardOkZ rows g.values = true) :
-    Correct g w (maxTask g.positions g.values) (guardInput g) := by
-  obtain ⟨-, -, hk, hV⟩ := isLinearMaxK_spec hg
-  obtain ⟨hlen, hxV⟩ := guardInput_valid hV
-  have hlab : (guardInput g).foldl max 0 = g.values - 1 :=
-    label_eq (fun u hu => by rw [guardInput, List.mem_replicate] at hu; omega)
-      (by rw [guardInput, List.mem_replicate]; omega)
-  have hc : (0 : ℚ) < 2 ^ (eE + eL + eU) := zpow_pos two_pos _
-  rw [correct_iff hg hw hlen hxV]
-  intro j hj hjl
-  rw [hlab] at hjl ⊢
-  have hlt := List.all_eq_true.mp hguard j (List.mem_range.mpr hj)
-  simp only [hjl, decide_false, Bool.false_or, decide_eq_true_eq] at hlt
-  rw [hrows j hj, hrows (g.values - 1) (by omega), getD_rowZ hj (by omega),
-    getD_rowZ (by omega) (by omega)] at hlt
-  simp only [guardInput, List.map_replicate, List.sum_replicate, nsmul_eq_mul, Mval_eq]
-  have hlt' : (MZ mE mL mU g.values d j (g.values - 1) : ℚ) <
-      MZ mE mL mU g.values d (g.values - 1) (g.values - 1) := by exact_mod_cast hlt
-  have hkpos : (0 : ℚ) < g.positions := by exact_mod_cast hk
-  exact mul_lt_mul_of_pos_left (mul_lt_mul_of_pos_left hlt' hc) hkpos
-
 end Bridge
 
 open Classical in
 /-- **The count from a table.** On weights given as integer mantissas with one exponent per
-    tensor, with a table whose rows are the rows of `MZ` and on which the guard's test passes, the
-    checker's count is `countZ` of the table, and its bill is `bill k V d`. -/
-theorem check_billed_of_table {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ} {d : ℕ}
+    tensor, with a table whose rows are the rows of `MZ`, the checker's count is `countZ` of the
+    table, and its bill is `bill V d`. -/
+theorem check_billed_of_table {g : Graph} {w : Weights ℚ} {d : ℕ}
     {mE mL mU : List ℤ} {eE eL eU : ℤ}
     (hE : List.lookup nE w = some (dyadicTensor [d, g.values] mE eE))
     (hL : List.lookup nL w = some (dyadicTensor [d, d] mL eL))
     (hU : List.lookup nU w = some (dyadicTensor [g.values, d] mU eU))
     (hEn : mE.length = d * g.values) (hLn : mL.length = d * d) (hUn : mU.length = g.values * d)
     {rows : List (List ℤ)} (hrows : ∀ j < g.values, rows.getD j [] = rowZ mE mL mU g.values d j)
-    (hguard : guardOkZ rows g.values = true) (c : Cert) :
+    (c : Cert) :
     CostM.billed (check Interp.counting g (maxTask g.positions g.values)) ⟨w, c⟩ =
-      some (countZ rows g.positions g.values, bill g.positions g.values d) := by
+      some (countZ rows g.positions g.values, bill g.values d) := by
   have hw : WF w g.values d (dyadicTensor [d, g.values] mE eE) (dyadicTensor [d, d] mL eL)
       (dyadicTensor [g.values, d] mU eU) :=
     ⟨hE, rfl, by simp [dyadicTensor, hEn], hL, rfl, by simp [dyadicTensor, hLn], hU, rfl,
       by simp [dyadicTensor, hUn]⟩
-  obtain ⟨-, -, -, hV⟩ := isLinearMaxK_spec hg
-  obtain ⟨hlen, hxV⟩ := guardInput_valid hV
-  have hs : singleOk g w (maxTask g.positions g.values) (guardInput g) = true :=
-    (singleOk_iff hg hw hlen hxV).mpr (guard_correct hg hw hrows hguard)
-  rw [(runs_check (env := ⟨w, c⟩) hg hw).billed]
-  simp only [hs, Bool.true_and]
+  rw [(runs_check (env := ⟨w, c⟩) hw (maxTask g.positions g.values)).billed]
   congr 2
   unfold countZ
   congr 1

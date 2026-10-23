@@ -8,7 +8,7 @@ import LinearMaxK.Exact
 
 For each network file (`scripts/export_network.py` of the Lean repository), runs the checker of
 `LinearMaxK` with the counting interpreter, compiled, and prints one JSON line: the count, the bill,
-`bill k V d` from the cost formula, and `E` (the number of weight entries, which the open lane
+`bill V d` from the cost formula, and `E` (the number of weight entries, which the open lane
 charges once as `extract`). This is a measurement, not a kernel check: the kernel-checked instances
 are in `instances/`.
 -/
@@ -29,7 +29,7 @@ def measureOne (path : String) : IO Unit := do
     IO.println (Json.mkObj [("network", Json.str net.network), ("family", toJson (IsLinearMaxK g)),
       ("k", toJson g.positions), ("V", toJson g.values), ("d", toJson d),
       ("count", toJson count), ("bill", toJson bill'),
-      ("bill_formula", toJson (bill g.positions g.values d)),
+      ("bill_formula", toJson (bill g.values d)),
       ("E", toJson e), ("length", toJson (bill' + e))]).compress
 
 def main (args : List String) : IO UInt32 := do

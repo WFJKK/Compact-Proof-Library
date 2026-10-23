@@ -22,8 +22,9 @@ For a piece and an output `j ≠ m`, with `D(t) = M[m, t] - M[j, t]`:
   (`2 (m - lo) + 4` operations): one token of the input is `m`, another is its smallest token, in
   `[lo, hi]`, and the other `k - 2` are in `[lo, m]`.
 
-A piece counts its size if its tests and the guard pass. Before anything, the checker checks that
-the plan is valid (`planOk`); for an invalid plan it certifies nothing.
+A piece counts its size if its tests pass. Before anything, the checker checks the weights' shapes
+and lengths, as entry 1's does, and that the plan is valid (`planOk`); otherwise it certifies
+nothing.
 -/
 
 namespace LinearMaxKPlans
@@ -60,28 +61,28 @@ def pieceTests (cols : List (List I.V)) (km1 km2 : I.V) (p : Piece) : List ℕ �
       let r ← pieceTests cols km1 km2 p js
       I.band cat b r
 
-/-- The count of the pieces `ps`: each piece's size if its tests and the guard pass. -/
-def countPieces (cols : List (List I.V)) (km1 km2 : I.V) (ok0 : I.B) (k V : ℕ) :
-    List Piece → I.M I.N
+/-- The count of the pieces `ps`: each piece's size if its tests pass. -/
+def countPieces (cols : List (List I.V)) (km1 km2 : I.V) (k V : ℕ) : List Piece → I.M I.N
   | [] => pure I.nzero
   | p :: ps => do
     let b ← pieceTests I cols km1 km2 p (List.range V)
-    let bb ← I.band cat ok0 b
-    let n ← countPieces cols km1 km2 ok0 k V ps
-    pure (I.nadd (I.nscale (p.size k) bb) n)
+    let n ← countPieces cols km1 km2 k V ps
+    pure (I.nadd (I.nscale (p.size k) b) n)
 
 /-- The checker of the plan `plan`, for the graph `g` and the task `task`. -/
-def check (plan : List Piece) (g : Graph) (task : Task) : I.M I.N := do
+def check (plan : List Piece) (g : Graph) (_task : Task) : I.M I.N := do
   let sE ← I.weightShape nE
   let sL ← I.weightShape nL
   let sU ← I.weightShape nU
+  let lE ← I.weightSize nE
+  let lL ← I.weightSize nL
+  let lU ← I.weightSize nU
   let d := sE.headD 0
-  if sE == [d, g.values] && sL == [d, d] && sU == [g.values, d] && planOk g.values plan then do
-    let ok0 ← I.single g task (List.replicate g.positions (g.values - 1))
+  if wellFormed g.values d sE sL sU lE lL lU && planOk g.values plan then do
     let cols ← columns I g.values d (List.range g.values)
     let km1 ← I.lit cat (g.positions - 1)
     let km2 ← I.lit cat (g.positions - 2)
-    countPieces I cols km1 km2 ok0 g.positions g.values plan
+    countPieces I cols km1 km2 g.positions g.values plan
   else pure I.nzero
 
 end Checker

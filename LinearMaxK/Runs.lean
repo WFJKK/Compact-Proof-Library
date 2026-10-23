@@ -169,24 +169,22 @@ theorem countP_ne (m : ℕ) : ∀ V : ℕ,
       · subst h2; simp
       · simp [h1, h2, show ¬ m < V + 1 by omega]
 
-theorem runs_countGroups {k : ℕ} (ok0 : Bool) :
+theorem runs_countGroups {k : ℕ} :
     ∀ (ms : List ℕ), (∀ m ∈ ms, m < V) →
-      Runs (countGroups K (colsQ tE tL tU V d) ⟨((k - 1 : ℕ) : ℚ)⟩ ok0 k V ms) env
-        ((ms.map fun m => cond (ok0 && groupOk tE tL tU V d k m)
-          (Nat.pow (m + 1) k - Nat.pow m k) 0).sum)
-        ((ms.map fun m => (V - 1) * (2 * m + 4) + 1).sum)
+      Runs (countGroups K (colsQ tE tL tU V d) ⟨((k - 1 : ℕ) : ℚ)⟩ k V ms) env
+        ((ms.map fun m => cond (groupOk tE tL tU V d k m) (Nat.pow (m + 1) k - Nat.pow m k) 0).sum)
+        ((ms.map fun m => (V - 1) * (2 * m + 4)).sum)
   | [], _ => (Runs.pure _).congr rfl rfl
   | m :: ms, hm => by
     have hm0 := hm m List.mem_cons_self
     simp only [countGroups, Interp.counting_bind, Interp.counting_pure]
     exact Runs.bind' (runs_groupTest (k := k) hm0 (List.range V) fun j hj => List.mem_range.mp hj)
-      (Runs.bind' (runs_band cat _ _)
-        (Runs.bind' (runs_countGroups ok0 ms fun u hu => hm u (List.mem_cons_of_mem _ hu))
-          (Runs.pure _) rfl rfl) rfl rfl)
-      (by simp [groupOk]) (by simp [countP_ne, hm0]; ring)
+      (Runs.bind' (runs_countGroups ms fun u hu => hm u (List.mem_cons_of_mem _ hu))
+        (Runs.pure _) rfl rfl)
+      (by simp [groupOk]) (by simp [countP_ne, hm0])
 
-/-- The forward pass of the guard, on a network of the family: `k d` for the embedding of the
-    tokens, `d^2` and `V d` for the two other maps, `V - 1` comparisons. -/
+/-- A forward pass on a network of the family: `k d` for the embedding of the tokens, `d^2` and
+    `V d` for the two other maps, `V - 1` comparisons. -/
 theorem singleCost_family {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ}
     (hw : WF w g.values d tE tL tU) :
     singleCost g w = some (g.positions * d + d * d + d * g.values + (g.values - 1)) := by
@@ -194,36 +192,36 @@ theorem singleCost_family {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights 
   simp [singleCost, reachable, reachable.go, hn, ho, Op.args, hw.hE, hw.hEs, hw.hL, hw.hLs, hw.hU,
     hw.hUs, normDim, shapeSize]
 
-/-- The guard's input: every token `V - 1`. -/
-def guardInput (g : Graph) : Input := List.replicate g.positions (g.values - 1)
+/-- The bill: the columns, the literal `k - 1`, and the tests of each group (`2m + 4` for each of
+    the `V - 1` other outputs, with its gate). -/
+def bill (V d : ℕ) : ℕ :=
+  V * (d * d + V * d) + 1 + ((List.range V).map fun m => (V - 1) * (2 * m + 4)).sum
 
-/-- The bill: the guard's forward pass, the columns, the literal `k - 1`, and the tests of each
-    group (`2m + 4` for each of the `V - 1` other outputs, and a gate). -/
-def bill (k V d : ℕ) : ℕ :=
-  (k * d + d * d + d * V + (V - 1)) + V * (d * d + V * d) + 1 +
-    ((List.range V).map fun m => (V - 1) * (2 * m + 4) + 1).sum
+/-- Well-formed weights pass the checker's public check. -/
+theorem wellFormed_of_WF (hw : WF env.weights V d tE tL tU) :
+    wellFormed V d tE.shape tL.shape tU.shape tE.data.size tL.data.size tU.data.size = true := by
+  simp [wellFormed, hw.hEs, hw.hLs, hw.hUs, hw.hEn, hw.hLn, hw.hUn]
 
 /-- What the checker does on a network of the family with well-formed weights: its count, from the
-    guard and the groups' tests, and its bill. -/
-theorem runs_check {g : Graph} (hg : IsLinearMaxK g = true)
-    (hw : WF env.weights g.values d tE tL tU) :
-    Runs (check K g (maxTask g.positions g.values)) env
+    groups' tests, and its bill. -/
+theorem runs_check {g : Graph} (hw : WF env.weights g.values d tE tL tU) (task : Task) :
+    Runs (check K g task) env
       (((List.range g.values).map fun m =>
-        cond (singleOk g env.weights (maxTask g.positions g.values) (guardInput g) &&
-          groupOk tE tL tU g.values d g.positions m)
+        cond (groupOk tE tL tU g.values d g.positions m)
           (Nat.pow (m + 1) g.positions - Nat.pow m g.positions) 0).sum)
-      (bill g.positions g.values d) := by
+      (bill g.values d) := by
   simp only [check, Interp.counting_bind]
   refine Runs.bind0 (runs_weightShape hw.hE) ?_
   refine Runs.bind0 (runs_weightShape hw.hL) ?_
   refine Runs.bind0 (runs_weightShape hw.hU) ?_
-  simp only [hw.hEs, hw.hLs, hw.hUs, List.headD_cons, beq_self_eq_true, Bool.and_self,
-    ↓reduceIte]
-  exact Runs.bind' (runs_single (singleCost_family hg hw))
-    (Runs.bind' (runs_columns hw fun t ht => List.mem_range.mp ht)
-      (Runs.bind' (runs_lit cat _)
-        (runs_countGroups _ (List.range g.values) fun m hm => List.mem_range.mp hm) rfl rfl)
-      rfl rfl)
+  refine Runs.bind0 (runs_weightSize hw.hE) ?_
+  refine Runs.bind0 (runs_weightSize hw.hL) ?_
+  refine Runs.bind0 (runs_weightSize hw.hU) ?_
+  have hd : tE.shape.headD 0 = d := by rw [hw.hEs]; rfl
+  simp only [hd, wellFormed_of_WF hw, ↓reduceIte]
+  exact Runs.bind' (runs_columns hw fun t ht => List.mem_range.mp ht)
+    (Runs.bind' (runs_lit cat _)
+      (runs_countGroups (List.range g.values) fun m hm => List.mem_range.mp hm) rfl rfl)
     rfl (by simp [bill]; ring)
 
 end

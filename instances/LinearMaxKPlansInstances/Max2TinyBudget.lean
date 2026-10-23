@@ -10,7 +10,7 @@ width `d = 4`. The protected module is the one the acceptance service generates 
 The plan is the one the pipeline's baseline 04 chooses at knob 0.75 (a third of the full proof's
 leaf work): the whole group of 7, and the inputs of the group of 6 whose tokens are all at least 4.
 The kernel evaluates the checker on the protected weights (`D_instance`): 15 + 5 = 20 inputs
-certified, for a bill of 633 (`LinearMaxKPlans.billPlan`).
+certified, for a bill of 568 (`LinearMaxKPlans.billPlan`).
 -/
 
 namespace LinearMaxKPlansInstances.Max2TinyBudget
@@ -27,7 +27,7 @@ theorem D_sound : ∀ (w : Weights ℚ) (c : Cert) (n : Nat) (cost : Cost),
     CostM.exec (D Interp.counting) ⟨w, c⟩ = some (n, cost) → n ≤ numCorrect graph w task :=
   fun w c n cost h => check_sound (g := graph) (by decide) plan w c n cost h
 
-theorem D_instance : CostM.billed (D Interp.counting) ⟨weights, cert⟩ = some (20, 633) := by
+theorem D_instance : CostM.billed (D Interp.counting) ⟨weights, cert⟩ = some (20, 568) := by
   decide +kernel
 
 theorem performance : Target := by

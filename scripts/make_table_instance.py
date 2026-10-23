@@ -11,9 +11,9 @@ reads a network file of CompactCheck's scripts/export_network.py and writes
 
 The instance proves the protected target through `LinearMaxK.check_billed_of_table`: the weights as
 integer mantissas (checked against the protected weights by `rfl`), the rows of `MZ = U L E` (one
-`decide +kernel` per row), the outcome of each group's tests (one `decide +kernel` per group), and the
-guard's test on the table (one `decide +kernel`). This script computes the same numbers in Python, exactly,
-to write them down; the kernel checks every one of them.
+`decide +kernel` per row), and the outcome of each group's tests (one `decide +kernel` per group). This
+script computes the same numbers in Python, exactly, to write them down; the kernel checks every one of
+them.
 """
 
 from __future__ import annotations
@@ -80,11 +80,8 @@ def main() -> None:
         return 0 < dm + (k - 1) * mu
 
     groups = [all(j == m or pair_ok(m, j) for j in range(V)) for m in range(V)]
-    guard = all(MZ[V - 1][V - 1] > MZ[j][V - 1] for j in range(V) if j != V - 1)
-    if not guard:
-        raise SystemExit("the network answers the guard input wrongly: the checker certifies nothing")
     count = sum((m + 1) ** k - m ** k for m in range(V) if groups[m])
-    bill = (k * d + d * d + d * V + (V - 1)) + V * (d * d + V * d) + 1 + ((V - 1) * V * (V + 3) + V)
+    bill = V * (d * d + V * d) + 1 + (V - 1) * V * (V + 3)  # LinearMaxK.bill_eq
 
     prot = module_name(net["network"], count)
     (LIB / "instances" / "networks").mkdir(parents=True, exist_ok=True)
@@ -110,8 +107,7 @@ through `LinearMaxK.check_billed_of_table`, in small steps that the kernel check
   by `rfl`; the recursion limit is raised for these three, to unfold lists of hundreds of entries);
 * the rows of `MZ = U L E` over the integers are the table `rows` (`row_0`, ..., one `decide` each);
 * the tests of each group on the table come out as the list `outcomes` (`group_0`, ..., one
-  `decide` each);
-* the guard input is answered correctly, as the table shows (`guard`, one `decide`).
+  `decide` each).
 
 Written by `scripts/make_table_instance.py`.
 -/
@@ -156,9 +152,7 @@ theorem D_sound : ∀ (w : Weights ℚ) (c : Cert) (n : Nat) (cost : Cost),
 {cases}
   | _ + {V}, h => absurd h (by omega)
 """)
-    P.append(f"""/-! ## The guard, and the instance -/
-
-theorem guard : guardOkZ rows {V} = true := by decide +kernel
+    P.append(f"""/-! ## The instance -/
 
 theorem hEn : mE.length = {d} * {V} := by decide +kernel
 theorem hLn : mL.length = {d} * {d} := by decide +kernel
@@ -166,8 +160,8 @@ theorem hUn : mU.length = {V} * {d} := by decide +kernel
 
 theorem D_instance : CostM.billed (D Interp.counting) ⟨weights, cert⟩ = some ({count}, {bill}) := by
   have h : CostM.billed (D Interp.counting) ⟨weights, cert⟩ =
-      some (countZ rows {k} {V}, bill {k} {V} {d}) :=
-    check_billed_of_table (g := graph) (by decide) hE hL hU hEn hLn hUn hrows guard cert
+      some (countZ rows {k} {V}, bill {V} {d}) :=
+    check_billed_of_table (g := graph) hE hL hU hEn hLn hUn hrows cert
   rw [h, countZ_eq outcomes hgroups]
   decide +kernel
 

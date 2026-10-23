@@ -9,7 +9,8 @@ The test of the group `m` against the output `j` bounds the margin of every inpu
 margin is at least
 `D(m) + (k - 1) min_{t ≤ m} D(t)`, which the test requires to be positive (`group_correct`).
 
-For weights that are not well formed, the guard fails and the count is zero (`countGroups_false`).
+For weights that are not well formed, the checker's public check on the shapes and lengths fails,
+and the count is zero.
 -/
 
 namespace LinearMaxK
@@ -106,42 +107,23 @@ theorem group_correct {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ}
 
 /-! ## Soundness -/
 
-variable {env : Env}
-
-/-- With the guard's result false, every gate is false and the count is zero, whatever the
-    columns hold. -/
-theorem countGroups_false {cols : List (List Q)} {km1 : Q} {k : ℕ} :
-    ∀ {ms : List ℕ} {c c' : Cost} {n : ℕ},
-      (countGroups K cols km1 false k V ms).run env c = some (n, c') → n = 0
-  | [], c, c', n, h => by
-    simp only [countGroups, Interp.counting_pure, CostM.run_pure, Option.some.injEq,
-      Prod.mk.injEq] at h
-    exact h.1.symm
-  | m :: ms, c, c', n, h => by
-    simp only [countGroups, Interp.counting_bind, Interp.counting_pure] at h
-    obtain ⟨b, c1, -, h⟩ := Runs.bind_some h
-    obtain ⟨bb, c2, hbb, h⟩ := Runs.bind_some h
-    obtain ⟨n', c3, hn', h⟩ := Runs.bind_some h
-    have hbb' := ((runs_band cat false b).det hbb).1
-    have := countGroups_false hn'
-    simp only [CostM.run_pure, Option.some.injEq, Prod.mk.injEq] at h
-    rw [← h.1, hbb', this]
-    simp
-
-/-- The guard's input is an input of the network. -/
-theorem guardInput_valid {g : Graph} (hV : 0 < g.values) :
-    (guardInput g).length = g.positions ∧ ∀ t ∈ guardInput g, t < g.values := by
-  refine ⟨by simp [guardInput], fun t ht => ?_⟩
-  rw [guardInput, List.mem_replicate] at ht
-  omega
-
-/-- The count of the checker, when the guard passes, as a finite sum over the groups. -/
+/-- The count of the checker, as a finite sum over the groups. -/
 theorem count_eq (k V : ℕ) (ok : ℕ → Bool) :
-    ((List.range V).map fun m => cond (true && ok m) (Nat.pow (m + 1) k - Nat.pow m k) 0).sum =
+    ((List.range V).map fun m => cond (ok m) (Nat.pow (m + 1) k - Nat.pow m k) 0).sum =
       ∑ m ∈ Finset.range V, if ok m then (m + 1) ^ k - m ^ k else 0 := by
   rw [sum_range_eq]
   refine Finset.sum_congr rfl fun m _ => ?_
   cases ok m <;> simp
+
+/-- The weights pass the checker's public check: they are well formed. -/
+theorem WF_of_wellFormed {w : Weights ℚ} {V d : ℕ} {tE tL tU : Tensor ℚ}
+    (hE : List.lookup nE w = some tE) (hL : List.lookup nL w = some tL)
+    (hU : List.lookup nU w = some tU)
+    (h : wellFormed V d tE.shape tL.shape tU.shape tE.data.size tL.data.size tU.data.size = true) :
+    WF w V d tE tL tU := by
+  simp only [wellFormed, Bool.and_eq_true, beq_iff_eq] at h
+  obtain ⟨⟨⟨⟨⟨hEs, hLs⟩, hUs⟩, hEn⟩, hLn⟩, hUn⟩ := h
+  exact ⟨hE, hEs, hEn, hL, hLs, hLn, hU, hUs, hUn⟩
 
 open Classical in
 /-- **Soundness.** For every network of the family, whatever its weights, the count the checker
@@ -158,34 +140,26 @@ theorem check_sound {g : Graph} (hg : IsLinearMaxK g = true) (w : Weights ℚ) (
   obtain ⟨sE, c1, hsE, h⟩ := Runs.bind_some h
   obtain ⟨sL, c2, hsL, h⟩ := Runs.bind_some h
   obtain ⟨sU, c3, hsU, h⟩ := Runs.bind_some h
+  obtain ⟨lE, c4, hlE, h⟩ := Runs.bind_some h
+  obtain ⟨lL, c5, hlL, h⟩ := Runs.bind_some h
+  obtain ⟨lU, c6, hlU, h⟩ := Runs.bind_some h
   obtain ⟨tE, hE, rfl⟩ := weightShape_some hsE
   obtain ⟨tL, hL, rfl⟩ := weightShape_some hsL
   obtain ⟨tU, hU, rfl⟩ := weightShape_some hsU
+  obtain ⟨tE', hE', rfl⟩ := weightSize_some hlE
+  obtain ⟨tL', hL', rfl⟩ := weightSize_some hlL
+  obtain ⟨tU', hU', rfl⟩ := weightSize_some hlU
+  have := hE.symm.trans hE'; cases this
+  have := hL.symm.trans hL'; cases this
+  have := hU.symm.trans hU'; cases this
   generalize hd : tE.shape.headD 0 = d at h
-  by_cases hc : (tE.shape == [d, g.values] && tL.shape == [d, d] &&
-      tU.shape == [g.values, d]) = true
-  · have hc' := hc
-    simp only [Bool.and_eq_true, beq_iff_eq] at hc'
-    obtain ⟨⟨hEs, hLs⟩, hUs⟩ := hc'
-    simp only [hc, ↓reduceIte] at h
-    obtain ⟨ok0, c4, hok0, h⟩ := Runs.bind_some h
-    obtain ⟨sc, hsc⟩ := single_some hok0
-    have hok0v := ((runs_single (task := maxTask g.positions g.values) (x := guardInput g)
-      hsc).det hok0).1
-    cases hok : singleOk g w (maxTask g.positions g.values) (guardInput g)
-    · obtain ⟨cols, c5, -, h⟩ := Runs.bind_some h
-      obtain ⟨km1, c6, -, h⟩ := Runs.bind_some h
-      rw [hok0v, hok] at h
-      rw [countGroups_false h]
-      exact Nat.zero_le _
-    · obtain ⟨hlen, hxV⟩ := guardInput_valid hV
-      obtain ⟨out, hout⟩ := evalGraph_of_singleOk hok
-      have hw : WF w g.values d tE tL tU := wf_of_eval hg hE hEs hL hLs hU hUs hlen hxV hout
-      have hrun := ((runs_check (env := ⟨w, c⟩) hg hw).det h0).1
-      simp only [hok] at hrun
-      rw [hrun, count_eq]
-      exact sum_groups_le hk hV _ _ fun m _ hok' x hx hlab =>
-        decide_eq_true (group_correct hg hw hok' hx hlab)
+  by_cases hc : wellFormed g.values d tE.shape tL.shape tU.shape tE.data.size tL.data.size
+      tU.data.size = true
+  · have hw := WF_of_wellFormed hE hL hU hc
+    have hrun := ((runs_check (env := ⟨w, c⟩) hw (maxTask g.positions g.values)).det h0).1
+    rw [hrun, count_eq]
+    exact sum_groups_le hk hV _ _ fun m _ hok' x hx hlab =>
+      decide_eq_true (group_correct hg hw hok' hx hlab)
   · simp only [hc, Bool.false_eq_true, ↓reduceIte, Interp.counting_pure, CostM.run_pure,
       Option.some.injEq, Prod.mk.injEq] at h
     rw [← h.1]

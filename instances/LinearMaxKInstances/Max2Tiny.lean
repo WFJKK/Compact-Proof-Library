@@ -9,7 +9,7 @@ width `d = 4`. The protected module is the one the acceptance service generates 
 
 The general layer's checker, on this graph and task, with its soundness theorem specialised; the
 kernel evaluates the checker on the protected weights (`D_instance`): all 64 inputs certified, for a
-bill of 1072, which is `bill 2 8 4` (`LinearMaxK.bill_eq`).
+bill of 1001, which is `bill 8 4` (`LinearMaxK.bill_eq`).
 -/
 
 namespace LinearMaxKInstances.Max2Tiny
@@ -23,7 +23,7 @@ theorem D_sound : ∀ (w : Weights ℚ) (c : Cert) (n : Nat) (cost : Cost),
     CostM.exec (D Interp.counting) ⟨w, c⟩ = some (n, cost) → n ≤ numCorrect graph w task :=
   fun w c n cost h => check_sound (g := graph) (by decide) w c n cost h
 
-theorem D_instance : CostM.billed (D Interp.counting) ⟨weights, cert⟩ = some (64, 1072) := by
+theorem D_instance : CostM.billed (D Interp.counting) ⟨weights, cert⟩ = some (64, 1001) := by
   decide +kernel
 
 theorem performance : Target := by

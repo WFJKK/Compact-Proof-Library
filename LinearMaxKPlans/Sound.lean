@@ -122,27 +122,6 @@ theorem piece_correct {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ}
 
 /-! ## Soundness -/
 
-variable {env : Env}
-
-/-- With the guard's result false, every gate is false and the count is zero. -/
-theorem countPieces_false {cols : List (List Q)} {km1 km2 : Q} {k : ℕ} :
-    ∀ {ps : List Piece} {c c' : Cost} {n : ℕ},
-      (countPieces K cols km1 km2 false k V ps).run env c = some (n, c') → n = 0
-  | [], c, c', n, h => by
-    simp only [countPieces, Interp.counting_pure, CostM.run_pure, Option.some.injEq,
-      Prod.mk.injEq] at h
-    exact h.1.symm
-  | p :: ps, c, c', n, h => by
-    simp only [countPieces, Interp.counting_bind, Interp.counting_pure] at h
-    obtain ⟨b, c1, -, h⟩ := Runs.bind_some h
-    obtain ⟨bb, c2, hbb, h⟩ := Runs.bind_some h
-    obtain ⟨n', c3, hn', h⟩ := Runs.bind_some h
-    have hbb' := ((runs_band cat false b).det hbb).1
-    have := countPieces_false hn'
-    simp only [CostM.run_pure, Option.some.injEq, Prod.mk.injEq] at h
-    rw [← h.1, hbb', this]
-    simp
-
 open Classical in
 /-- **Soundness.** For every network of the family, whatever its weights, and every plan, the count
     the checker computes is at most the number of inputs the network answers correctly. -/
@@ -151,53 +130,45 @@ theorem check_sound {g : Graph} (hg : IsLinearMaxK g = true) (plan : List Piece)
     (h : CostM.exec (check Interp.counting plan g (maxTask g.positions g.values)) ⟨w, c⟩ =
       some (n, cost)) :
     n ≤ numCorrect g w (maxTask g.positions g.values) := by
-  obtain ⟨-, -, hk, hV⟩ := isLinearMaxK_spec hg
+  obtain ⟨-, -, hk, -⟩ := isLinearMaxK_spec hg
   unfold CostM.exec at h
   have h0 := h
   simp only [check, Interp.counting_bind] at h
   obtain ⟨sE, c1, hsE, h⟩ := Runs.bind_some h
   obtain ⟨sL, c2, hsL, h⟩ := Runs.bind_some h
   obtain ⟨sU, c3, hsU, h⟩ := Runs.bind_some h
+  obtain ⟨lE, c4, hlE, h⟩ := Runs.bind_some h
+  obtain ⟨lL, c5, hlL, h⟩ := Runs.bind_some h
+  obtain ⟨lU, c6, hlU, h⟩ := Runs.bind_some h
   obtain ⟨tE, hE, rfl⟩ := weightShape_some hsE
   obtain ⟨tL, hL, rfl⟩ := weightShape_some hsL
   obtain ⟨tU, hU, rfl⟩ := weightShape_some hsU
+  obtain ⟨tE', hE', rfl⟩ := weightSize_some hlE
+  obtain ⟨tL', hL', rfl⟩ := weightSize_some hlL
+  obtain ⟨tU', hU', rfl⟩ := weightSize_some hlU
+  have := hE.symm.trans hE'; cases this
+  have := hL.symm.trans hL'; cases this
+  have := hU.symm.trans hU'; cases this
   generalize hd : tE.shape.headD 0 = d at h
-  by_cases hc : (tE.shape == [d, g.values] && tL.shape == [d, d] &&
-      tU.shape == [g.values, d] && planOk g.values plan) = true
-  · have hc' := hc
-    simp only [Bool.and_eq_true, beq_iff_eq] at hc'
-    obtain ⟨⟨⟨hEs, hLs⟩, hUs⟩, hplan⟩ := hc'
-    simp only [hc, ↓reduceIte] at h
-    obtain ⟨ok0, c4, hok0, h⟩ := Runs.bind_some h
-    obtain ⟨sc, hsc⟩ := single_some hok0
-    have hok0v := ((runs_single (task := maxTask g.positions g.values) (x := guardInput g)
-      hsc).det hok0).1
-    cases hok : singleOk g w (maxTask g.positions g.values) (guardInput g)
-    · obtain ⟨cols, c5, -, h⟩ := Runs.bind_some h
-      obtain ⟨km1, c6, -, h⟩ := Runs.bind_some h
-      obtain ⟨km2, c7, -, h⟩ := Runs.bind_some h
-      rw [hok0v, hok] at h
-      rw [countPieces_false h]
-      exact Nat.zero_le _
-    · obtain ⟨hlen, hxV⟩ := guardInput_valid hV
-      obtain ⟨out, hout⟩ := evalGraph_of_singleOk hok
-      have hw : WF w g.values d tE tL tU := wf_of_eval hg hE hEs hL hLs hU hUs hlen hxV hout
-      have hrun := ((runs_check (env := ⟨w, c⟩) hg hw hplan).det h0).1
-      simp only [hok, Bool.true_and] at hrun
-      rw [hrun]
-      unfold numCorrect
-      refine le_trans ?_ (sum_countP_le hk plan hplan _)
-      refine List.sum_le_sum fun p hp => ?_
-      cases hpo : pieceOk tE tL tU g.values d g.positions p
-      · simp
-      · simp only [Bool.cond_true]
-        rw [← countP_mem hk (valid_of_planOk hplan hp)]
-        refine le_of_eq (List.countP_congr fun x hx => ?_)
-        constructor
-        · intro hm
-          simp only [hm, Bool.true_and, decide_eq_true_eq]
-          exact piece_correct hg hw (valid_of_planOk hplan hp) hpo hx hm
-        · intro hm; simp only [Bool.and_eq_true] at hm; exact hm.1
+  by_cases hc : (wellFormed g.values d tE.shape tL.shape tU.shape tE.data.size tL.data.size
+      tU.data.size && planOk g.values plan) = true
+  · obtain ⟨hwf, hplan⟩ := Bool.and_eq_true _ _ ▸ hc
+    have hw := WF_of_wellFormed hE hL hU hwf
+    have hrun := ((runs_check (env := ⟨w, c⟩) hw hplan (maxTask g.positions g.values)).det h0).1
+    rw [hrun]
+    unfold numCorrect
+    refine le_trans ?_ (sum_countP_le hk plan hplan _)
+    refine List.sum_le_sum fun p hp => ?_
+    cases hpo : pieceOk tE tL tU g.values d g.positions p
+    · simp
+    · simp only [Bool.cond_true]
+      rw [← countP_mem hk (valid_of_planOk hplan hp)]
+      refine le_of_eq (List.countP_congr fun x hx => ?_)
+      constructor
+      · intro hm
+        simp only [hm, Bool.true_and, decide_eq_true_eq]
+        exact piece_correct hg hw (valid_of_planOk hplan hp) hpo hx hm
+      · intro hm; simp only [Bool.and_eq_true] at hm; exact hm.1
   · simp only [hc, Bool.false_eq_true, ↓reduceIte, Interp.counting_pure, CostM.run_pure,
       Option.some.injEq, Prod.mk.injEq] at h
     rw [← h.1]

@@ -7,10 +7,10 @@
    "type": "git",
    "subDir": null,
    "scope": "",
-   "rev": "c11b8e40f3c8d9b78ff144de8c1edb66dc3e75bb",
+   "rev": "56f82f25ebd2e9bded57376422002e6c09129acf",
    "name": "CompactCheck",
    "manifestFile": "lake-manifest.json",
-   "inputRev": "c11b8e40f3c8d9b78ff144de8c1edb66dc3e75bb",
+   "inputRev": "56f82f25ebd2e9bded57376422002e6c09129acf",
    "inherited": false,
    "configFile": "lakefile.toml"
   },

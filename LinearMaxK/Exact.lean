@@ -9,9 +9,8 @@ belongs to the group and has margin exactly `D(m) + (k - 1) D(t)` against `j`. S
 its tests iff the network answers every input of the group correctly (`groupOk_iff`).
 
 Hence, on well-formed weights (`check_billed`): the checker certifies exactly the groups the network
-answers entirely correctly (provided it answers the guard input, the input of `V - 1` tokens, which
-lies in the last group), and its bill is `bill k V d`, a function of the sizes alone. A network that
-answers every input correctly is certified on all `V^k` inputs (`check_complete`).
+answers entirely correctly, and its bill is `bill V d`, a function of the sizes alone. A network
+that answers every input correctly is certified on all `V^k` inputs (`check_complete`).
 -/
 
 namespace LinearMaxK
@@ -63,67 +62,52 @@ theorem groupOk_iff {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ}
   · simp [hjm]
   · simp [hjm, pairOk_of_correct hg hw hm (List.mem_range.mp hj) hjm h]
 
-/-- `Σ_{m < n} (c (2m + 4) + 1) = c n (n + 3) + n`. -/
+/-- `Σ_{m < n} c (2m + 4) = c n (n + 3)`. -/
 theorem sum_tests (c : ℕ) : ∀ n : ℕ,
-    ((List.range n).map fun m => c * (2 * m + 4) + 1).sum = c * n * (n + 3) + n
+    ((List.range n).map fun m => c * (2 * m + 4)).sum = c * n * (n + 3)
   | 0 => by simp
   | n + 1 => by
     rw [List.range_succ, List.map_append, List.sum_append, sum_tests c n]
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil]
     ring
 
-/-- The bill in closed form: the guard's forward pass `k d + d^2 + d V + V - 1`, the columns
-    `V (d^2 + V d)`, the literal `k - 1`, and the tests `(V - 1) V (V + 3) + V`. -/
-theorem bill_eq (k V d : ℕ) :
-    bill k V d = (k * d + d * d + d * V + (V - 1)) + V * (d * d + V * d) + 1 +
-      ((V - 1) * V * (V + 3) + V) := by
+/-- The bill in closed form: the columns `V (d^2 + V d)`, the literal `k - 1`, and the tests
+    `(V - 1) V (V + 3)`. -/
+theorem bill_eq (V d : ℕ) :
+    bill V d = V * (d * d + V * d) + 1 + (V - 1) * V * (V + 3) := by
   rw [bill, sum_tests]
 
 open Classical in
 /-- **Exactness and cost.** On well-formed weights the checker certifies exactly the groups the
-    network answers entirely correctly, provided it answers the guard input (`V - 1` at every
-    position) correctly; and its bill is `bill k V d`, whatever the weights' values. -/
+    network answers entirely correctly, and its bill is `bill V d`, whatever the weights'
+    values. -/
 theorem check_billed {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ}
     (hw : WF w g.values d tE tL tU) (c : Cert) :
     CostM.billed (check Interp.counting g (maxTask g.positions g.values)) ⟨w, c⟩ =
-      some ((if Correct g w (maxTask g.positions g.values) (guardInput g) then
-          ∑ m ∈ Finset.range g.values,
-            if ∀ x ∈ allInputs (List.replicate g.positions g.values), x.foldl max 0 = m →
-                Correct g w (maxTask g.positions g.values) x
-            then (m + 1) ^ g.positions - m ^ g.positions else 0
-          else 0), bill g.positions g.values d) := by
-  obtain ⟨-, -, -, hV⟩ := isLinearMaxK_spec hg
-  obtain ⟨hlen, hxV⟩ := guardInput_valid hV
-  rw [(runs_check (env := ⟨w, c⟩) hg hw).billed]
+      some (∑ m ∈ Finset.range g.values,
+          if ∀ x ∈ allInputs (List.replicate g.positions g.values), x.foldl max 0 = m →
+              Correct g w (maxTask g.positions g.values) x
+          then (m + 1) ^ g.positions - m ^ g.positions else 0,
+        bill g.values d) := by
+  rw [(runs_check (env := ⟨w, c⟩) hw (maxTask g.positions g.values)).billed, count_eq]
   congr 2
-  by_cases hc : Correct g w (maxTask g.positions g.values) (guardInput g)
-  · have hs : singleOk g w (maxTask g.positions g.values) (guardInput g) = true :=
-      (singleOk_iff hg hw hlen hxV).mpr hc
-    simp only [hs, hc, ↓reduceIte]
-    rw [count_eq]
-    refine Finset.sum_congr rfl fun m hm => ?_
-    rw [Finset.mem_range] at hm
-    by_cases hgrp : ∀ x ∈ allInputs (List.replicate g.positions g.values), x.foldl max 0 = m →
-        Correct g w (maxTask g.positions g.values) x
-    · simp only [(groupOk_iff hg hw hm).mpr hgrp, ↓reduceIte]
-      exact (ite_eq_left hgrp).symm
-    · have : groupOk tE tL tU g.values d g.positions m = false := by
-        cases h' : groupOk tE tL tU g.values d g.positions m
-        · rfl
-        · exact absurd ((groupOk_iff hg hw hm).mp h') hgrp
-      simp [this, hgrp]
-  · have hs : singleOk g w (maxTask g.positions g.values) (guardInput g) = false := by
-      cases h' : singleOk g w (maxTask g.positions g.values) (guardInput g)
+  refine Finset.sum_congr rfl fun m hm => ?_
+  rw [Finset.mem_range] at hm
+  by_cases hgrp : ∀ x ∈ allInputs (List.replicate g.positions g.values), x.foldl max 0 = m →
+      Correct g w (maxTask g.positions g.values) x
+  · simp only [(groupOk_iff hg hw hm).mpr hgrp, ↓reduceIte]
+    exact (ite_eq_left hgrp).symm
+  · have : groupOk tE tL tU g.values d g.positions m = false := by
+      cases h' : groupOk tE tL tU g.values d g.positions m
       · rfl
-      · exact absurd ((singleOk_iff hg hw hlen hxV).mp h') hc
-    simp [hs, hc]
+      · exact absurd ((groupOk_iff hg hw hm).mp h') hgrp
+    simp [this, hgrp]
 
-/-- **The cost formula.** On well-formed weights the bill depends on the sizes `(k, V, d)` only. -/
-theorem check_bill {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ}
-    (hw : WF w g.values d tE tL tU) (c : Cert) :
+/-- **The cost formula.** On well-formed weights the bill depends on `V` and `d` only. -/
+theorem check_bill {g : Graph} {w : Weights ℚ} (hw : WF w g.values d tE tL tU) (c : Cert) :
     ∃ n, CostM.billed (check Interp.counting g (maxTask g.positions g.values)) ⟨w, c⟩ =
-      some (n, bill g.positions g.values d) :=
-  ⟨_, (runs_check (env := ⟨w, c⟩) hg hw).billed⟩
+      some (n, bill g.values d) :=
+  ⟨_, (runs_check (env := ⟨w, c⟩) hw _).billed⟩
 
 /-- **Completeness.** A network of the family that answers every input correctly is certified on
     all `V^k` of them. -/
@@ -132,11 +116,9 @@ theorem check_complete {g : Graph} (hg : IsLinearMaxK g = true) {w : Weights ℚ
     (hall : ∀ x ∈ allInputs (List.replicate g.positions g.values),
       Correct g w (maxTask g.positions g.values) x) :
     CostM.billed (check Interp.counting g (maxTask g.positions g.values)) ⟨w, c⟩ =
-      some (g.values ^ g.positions, bill g.positions g.values d) := by
-  obtain ⟨-, -, hk, hV⟩ := isLinearMaxK_spec hg
-  obtain ⟨hlen, hxV⟩ := guardInput_valid hV
-  have hguard := hall _ (mem_allInputs_replicate.mpr ⟨hlen, hxV⟩)
-  rw [check_billed hg hw c, ite_eq_left hguard, ← sum_groupSize hk g.values]
+      some (g.values ^ g.positions, bill g.values d) := by
+  obtain ⟨-, -, hk, -⟩ := isLinearMaxK_spec hg
+  rw [check_billed hg hw c, ← sum_groupSize hk g.values]
   congr 2
   refine Finset.sum_congr rfl fun m _ => ?_
   exact ite_eq_left fun x hx _ => hall x hx
