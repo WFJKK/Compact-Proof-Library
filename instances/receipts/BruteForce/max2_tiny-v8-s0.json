@@ -1,0 +1,107 @@
+{
+ "schema": "open-lane-receipt-v1",
+ "candidate_id": "library-bruteforcemax2tiny",
+ "status": "accepted",
+ "reason": null,
+ "claim_kind": "performance",
+ "certified_count": 64,
+ "domain_size": 64,
+ "claimed_count": 64,
+ "network": "max2_tiny-v8-s0",
+ "theorem": "Candidate.BruteForceMax2Tiny.performance",
+ "statement": null,
+ "axioms": [
+  "propext",
+  "Classical.choice",
+  "Quot.sound"
+ ],
+ "isolation": "landlock",
+ "steps": [
+  {
+   "step": "protected",
+   "module": "Protected.N_max2_tiny_v8_s0_c64",
+   "cached": true
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.Common.Basic",
+   "rc": 0,
+   "seconds": 2.4,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.BruteForce.Checker",
+   "rc": 0,
+   "seconds": 2.1,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.BruteForceMax2Tiny",
+   "rc": 0,
+   "seconds": 21.4,
+   "timed_out": false
+  },
+  {
+   "step": "kernel",
+   "rc": 0,
+   "seconds": 19.3,
+   "timed_out": false
+  },
+  {
+   "step": "closure",
+   "rc": 0,
+   "seconds": 1.2,
+   "timed_out": false
+  },
+  {
+   "step": "score",
+   "rc": 0,
+   "seconds": 21.0,
+   "timed_out": false
+  }
+ ],
+ "digests": {
+  "commit": "c11b8e40f3c8d9b78ff144de8c1edb66dc3e75bb",
+  "toolchain": "lean:bf8d54e4714cc4b0",
+  "lean_project": "d36f4fb12b0bb567",
+  "policy": "cde74948a64643d3",
+  "acceptcheck": "ae878fc22796d840",
+  "modules": {
+   "Candidate.BruteForce.Checker": "319c0e57723bc64fd43f69a825f8b912d15796085af5c8719107553def92ea84",
+   "Candidate.Common.Basic": "4c3283befc2cc83fa3a1301c1d14e392e5c24a81c3dac732e38ef16df971b15e",
+   "Candidate.BruteForceMax2Tiny": "3a39fb8d11d61ee0e5097b4d9f55412253eed992fe09e0488a4c899e7d0fb619"
+  },
+  "network_file": "af7beeae9cfa75951c881d4ec320d6384648984033f33209eb2bcfcb05557346"
+ },
+ "score_eligible": true,
+ "execution_assurance": "kernel_checked_instance",
+ "cost_model": "cost-v3",
+ "scoring": {
+  "status": "scored",
+  "reason": null,
+  "assurance": "kernel_checked_instance",
+  "cost_model": "cost-v3",
+  "bill": 4032,
+  "extract": 80,
+  "read": 0,
+  "length": 4112,
+  "description_size": 378,
+  "size_budget": 8512,
+  "general_kernel_ms": 25,
+  "general_kernel_budget_ms": 120000,
+  "rest_kernel_ms": 19212,
+  "axioms": [
+   "propext",
+   "Classical.choice",
+   "Quot.sound"
+  ],
+  "closure_visited": 36,
+  "general_constants": 13,
+  "checker_constants": 5
+ },
+ "seconds": 69.8,
+ "time": "2026-10-23T09:39:42+0100",
+ "replayed_constants": 76
+}

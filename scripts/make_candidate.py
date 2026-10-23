@@ -23,7 +23,6 @@ import shutil
 from pathlib import Path
 
 LIB = Path(__file__).resolve().parent.parent
-LIBRARIES = ("LinearMaxK",)  # the library's own Lean libraries, by module prefix
 IMPORT = re.compile(r"^import\s+(\S+)\s*$")
 
 
@@ -41,7 +40,9 @@ def imports_of(text: str) -> list[str]:
 
 
 def is_library(module: str) -> bool:
-    return module.split(".")[0] in LIBRARIES
+    """A module of the library itself (Common.*, LinearMaxK.*, ...): its source is in the repository.
+    CompactCheck.*, Mathlib.* and the protected modules (under instances/) are not."""
+    return module_path(module).is_file()
 
 
 def module_path(module: str) -> Path:

@@ -9,9 +9,9 @@ import Mathlib.Tactic.Ring
 import Mathlib.Tactic.Linarith
 
 /-!
-# Tools: finite sums, and runs of counted computations
+# Tools shared by the entries: finite sums, and runs of counted computations
 
-Two kinds of facts used throughout the entry.
+Two kinds of facts used throughout the library.
 
 * The evaluator of CompactCheck writes a sum as `((List.range n).map f).sum`; the algebra is easier
   with `∑ i ∈ Finset.range n, f i`. `sum_range_eq` converts.
@@ -25,7 +25,7 @@ unless an imported module already has it, and the service refuses a candidate th
 constant of the trusted modules.
 -/
 
-namespace LinearMaxK
+namespace Common
 
 open CompactCheck
 
@@ -213,4 +213,4 @@ theorem runs_single {g : Graph} {task : Task} {x : Input} {sc : ℕ}
 
 end Ops
 
-end LinearMaxK
+end Common

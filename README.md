@@ -2,8 +2,8 @@
 
 Compact proofs of the performance of small trained networks, written in Lean 4 and proved once for a
 whole family of networks, at every size. Each entry is a checker in the counted language of the open
-lane, with theorems that say what it certifies and what it costs. An instance is one trained network
-of the family: the kernel evaluates the checker on it, and the entry's theorems turn the result into a
+lane, with theorems that say what it certifies and what it costs. An instance is one trained network:
+the kernel evaluates the checker on its weights, and the entry's theorems turn the result into a
 proof about that network.
 
 The specification is CompactCheck's, pinned to commit `c11b8e4` of
@@ -12,6 +12,25 @@ The specification is CompactCheck's, pinned to commit `c11b8e4` of
 (`CountedOps.lean`, version 4). The entries prove theorems about those definitions, never about
 copies of them. Lean 4.35.0-rc4, Mathlib v4.35.0-rc4; every theorem depends on the standard axioms
 only (`propext`, `Classical.choice`, `Quot.sound`).
+
+## Entries and instances
+
+An entry's theorems hold for every size and every choice of weights. They say three things:
+
+* soundness: the checker never certifies more inputs than the network answers correctly;
+* cost: the checker's bill, as a formula in the sizes;
+* count: which inputs the checker certifies, as a condition on the weights.
+
+The cost is the same for every network of the same sizes. The count is not: two networks of the
+same sizes can answer any number of inputs correctly, depending on their trained weights. So a
+number of certified inputs comes from an instance: the kernel evaluates the checker on one network's
+weights, and soundness turns that into the open lane's target, "at least N inputs correct", at the
+length the cost formula gives.
+
+| entry | method | networks | pipeline baseline |
+| --- | --- | --- | --- |
+| 1, `LinearMaxK/` | an exact test for each group of inputs with the same largest token | linear max-of-k, every `k`, `V`, `d` | 03, contract and interval, for every `k` |
+| 2, `BruteForce/` | one forward pass on every input | every network and task | 01, brute force |
 
 ## Entry 1: linear max-of-k (`LinearMaxK/`)
 
@@ -36,7 +55,9 @@ every `j ≠ m`,
     D(m) + (k - 1) · min_{t ≤ m} D(t) > 0
 
 The checker computes the columns of `M`, makes this test for every group and every other output, and
-counts the groups that pass, `(m + 1)^k - m^k` inputs each.
+counts the groups that pass, `(m + 1)^k - m^k` inputs each. For `k = 2` this is the pipeline's
+baseline 03: after the contraction to `M`, its interval leaf over the inputs `(t, m)` with `t ≤ m`
+bounds each margin by exactly this minimum.
 
 Before that it runs the network once, on the guard input with `V - 1` at every position, and gates
 every group's count on the answer. The counted language cannot read the length of a weight tensor,
@@ -71,7 +92,7 @@ addition, well-formed weights (`WF` in `Family.lean`): `E`, `L` and `U` are pres
 
 The bill does not depend on the values of the weights: the counted language cannot branch on a truth
 value, so the cost is a property of the method. Apart from the guard it does not depend on `k`
-either, while brute force grows as `V^k`.
+either, while brute force (entry 2) grows as `V^k`.
 
 ### Instances
 
@@ -86,32 +107,63 @@ either, while brute force grows as `V^k`.
   from `check_billed` and `bill_eq` for every well-formed network of these sizes), while the certified
   counts are measured with `lake exe measure`, the same checker compiled.
 * The length is the bill plus the number of weight entries, which the open lane charges once for
-  extracting the weights. Brute force is the open lane's: one forward pass on each of the `V^k` inputs,
-  its bill `V^k (k d + d² + d V + V - 1)` plus the same extraction. (The zoo's `B` for these networks,
+  extracting the weights. The brute force column is entry 2's length on the same network,
+  `V^k (k d + d² + d V + V - 1)` plus the same extraction. (The zoo's `B` for these networks,
   2,696,387 and 40,407,555, is defined a little differently.)
 * `correct` is the zoo's exact count of correct inputs. On every development network the checker
   certifies all of them: the inputs these networks get wrong fill whole groups (the group of the token
   0, or the groups of the tokens 0 and 1).
 * The tiny instance proves the target of the protected module, and the acceptance service accepted
-  and scored it: receipt in `instances/receipts/`, description size 4,285 of a budget of 8,512, general
-  layer replayed in 0.5 s.
+  and scored it: receipt in `instances/receipts/LinearMaxK/`, description size 4,285 of a budget of
+  8,512, general layer replayed in 0.6 s.
 * A single `decide +kernel` over the 300,000 charged operations of a `V = 64` instance ran out of
   memory here (8 GB; the acceptance service allows 12 GB), so a kernel-checked instance at that size
   is to be split into many small theorems; that is the next step.
+
+## Entry 2: brute force (`BruteForce/`)
+
+### The method
+
+The single-input rule, one exact forward pass charged as `cost-v3` charges it, on every input of the
+task's space, counting the inputs it answers correctly. It uses nothing about the network, so it is
+written once for every graph and every task, and every other entry is measured against it.
+
+### The theorems
+
+* `check_sound` (`Checker.lean`): for every graph, task, weights and certificate, the count is at
+  most `numCorrect`.
+* `check_billed`: when a forward pass can be billed, at `s` operations, the count is the number of
+  inputs the single-input rule passes, and the bill is `s` per input.
+* `check_billed_maxK` (`MaxK.lean`): on the linear max-of-k family with well-formed weights, the count
+  is exactly `numCorrect` and the bill is `V^k (k d + d² + d V + V - 1)`.
+
+On networks beyond linear maps the single-input rule encloses `exp` and `softmax` in rational bounds
+instead of computing them, so it could miss an input answered correctly by a tiny margin; the count
+stays sound.
+
+### Instances
+
+| network | k | V | d | certified | bill | length | checked by |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `max2_tiny-v8-s0` | 2 | 8 | 4 | 64 | 4,032 | 4,112 | kernel; accepted and scored |
+
+The receipt is in `instances/receipts/BruteForce/`: description size 378 of a budget of 8,512.
 
 ## Layout
 
 | file | what it is |
 | --- | --- |
-| `LinearMaxK/Basic.lean` | sums, and `Runs`: the value and the exact cost of a counted computation |
+| `Common/Basic.lean` | sums, and `Runs`: the value and the exact cost of a counted computation |
 | `LinearMaxK/Family.lean` | the family: graph, well-formed weights, `M = U L E`, logits as sums of columns |
 | `LinearMaxK/Groups.lean` | the groups: their sizes, and the partition of the inputs |
-| `LinearMaxK/Checker.lean` | the checker, in the counted language |
+| `LinearMaxK/Checker.lean` | entry 1's checker, in the counted language |
 | `LinearMaxK/Runs.lean` | what each part of the checker computes, and what it costs |
 | `LinearMaxK/Sound.lean` | soundness |
 | `LinearMaxK/Exact.lean` | exactness, completeness, the bill in closed form |
+| `BruteForce/Checker.lean` | entry 2's checker, its soundness and its bill, for every network |
+| `BruteForce/MaxK.lean` | brute force on the linear max-of-k family: exact, and its bill |
 | `instances/` | protected modules, instances, network files, receipts |
-| `Measure.lean` | `lake exe measure`: the checker on exported networks, compiled |
+| `Measure.lean` | `lake exe measure`: entry 1's checker on exported networks, compiled |
 | `scripts/make_candidate.py` | packages an instance for the acceptance service |
 
 ## Build
@@ -147,8 +199,8 @@ with the checker's own reader.
 
 ## Next
 
-* Kernel-checked instances at `V = 64`, split into theorems per column of `M` and per group.
-* Brute force as an entry of its own: the baseline, parametric.
-* Plans tuned to a network (tests cheaper than the exact one, where its weights allow), and networks
-  with `k = 3, 4`: apart from the guard, the exact method's cost does not grow with `k`; how the
-  cheaper tests fare is the experiment.
+* Kernel-checked instances of entry 1 at `V = 64`, split into theorems per row of `M` and per group.
+* Plans (the pipeline's baselines 03 with splitting and 04 with a budget): entry 1's exact test on
+  chosen pieces of groups, sound for every plan, with the bill a function of the plan.
+* Symmetry (baseline 02): one forward pass per sorted input, weighted by its number of permutations.
+* Networks with `k = 3, 4`: apart from the guard, entry 1's cost does not grow with `k`.

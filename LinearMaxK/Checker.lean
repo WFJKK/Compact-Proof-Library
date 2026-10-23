@@ -32,7 +32,7 @@ Nothing here depends on the weights' values except through `I`, so the bill is a
 
 namespace LinearMaxK
 
-open CompactCheck
+open CompactCheck Common
 
 section Checker
 

@@ -16,7 +16,7 @@ answers every input correctly is certified on all `V^k` inputs (`check_complete`
 
 namespace LinearMaxK
 
-open CompactCheck
+open CompactCheck Common
 
 variable {V d : ℕ} {tE tL tU : Tensor ℚ}
 

@@ -24,16 +24,16 @@
   },
   {
    "step": "compile",
-   "module": "Candidate.LinearMaxK.Basic",
+   "module": "Candidate.Common.Basic",
    "rc": 0,
-   "seconds": 2.3,
+   "seconds": 2.2,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Family",
    "rc": 0,
-   "seconds": 2.7,
+   "seconds": 3.0,
    "timed_out": false
   },
   {
@@ -47,34 +47,34 @@
    "step": "compile",
    "module": "Candidate.LinearMaxK.Groups",
    "rc": 0,
-   "seconds": 2.4,
+   "seconds": 2.2,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Runs",
    "rc": 0,
-   "seconds": 4.3,
+   "seconds": 4.2,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxK.Sound",
    "rc": 0,
-   "seconds": 2.7,
+   "seconds": 2.5,
    "timed_out": false
   },
   {
    "step": "compile",
    "module": "Candidate.LinearMaxKMax2Tiny",
    "rc": 0,
-   "seconds": 3.6,
+   "seconds": 3.3,
    "timed_out": false
   },
   {
    "step": "kernel",
    "rc": 0,
-   "seconds": 3.8,
+   "seconds": 3.7,
    "timed_out": false
   },
   {
@@ -86,7 +86,7 @@
   {
    "step": "score",
    "rc": 0,
-   "seconds": 3.6,
+   "seconds": 4.3,
    "timed_out": false
   }
  ],
@@ -97,12 +97,12 @@
   "policy": "cde74948a64643d3",
   "acceptcheck": "ae878fc22796d840",
   "modules": {
-   "Candidate.LinearMaxK.Basic": "ea7550ed2cf10ea31c31e78d3d7344ef5db6ab4bee721cab68ef12b64f2efe4c",
-   "Candidate.LinearMaxK.Checker": "eed843671263155e793bfdf28dd55817819e0c3ce539efc8f0fb1d613984aa10",
-   "Candidate.LinearMaxK.Family": "22c7c74a201512de132e089afed2d9c638ae09ed48c65c20e75f1b66f44758fe",
-   "Candidate.LinearMaxK.Groups": "2ece784c09382a7a4eab8917c17df18df38fae74aba8ccf2bfd73e60a33b7797",
-   "Candidate.LinearMaxK.Runs": "ee7306629ca035f425f23f6786ddd640f03da2c80d1794a761a65cdda7169ffe",
-   "Candidate.LinearMaxK.Sound": "a4ae057bde831bf36d2c7aa91226e859789188fccf15846f5699b9bcbb71e31b",
+   "Candidate.Common.Basic": "4c3283befc2cc83fa3a1301c1d14e392e5c24a81c3dac732e38ef16df971b15e",
+   "Candidate.LinearMaxK.Checker": "8a597cef6916d2b91172c0116a982e6a3cba71e1e2c9064721bed91890910d31",
+   "Candidate.LinearMaxK.Family": "f4f8addb0b43b8e3c128f1a16f7d76ef00a48ebbbeea83ba0cf189e0706885bc",
+   "Candidate.LinearMaxK.Groups": "f7cc2fd139b9ce34d616f4afa77fdc2c89abe6530c8822dcfb49aa9813f63b1e",
+   "Candidate.LinearMaxK.Runs": "7e5ba8a63f1df5f924903e8b49149f198473898490a912041fadfe73831f1487",
+   "Candidate.LinearMaxK.Sound": "908ed0b0750683448cca3a7c2e2ac5273a00af38d651c0686232b9c41668aebf",
    "Candidate.LinearMaxKMax2Tiny": "fba6f6aabc2b74beb3653a800ecebaa367bdb81f593a296edda1dfc0a7e622f1"
   },
   "network_file": "af7beeae9cfa75951c881d4ec320d6384648984033f33209eb2bcfcb05557346"
@@ -121,9 +121,9 @@
   "length": 1152,
   "description_size": 4285,
   "size_budget": 8512,
-  "general_kernel_ms": 467,
+  "general_kernel_ms": 598,
   "general_kernel_budget_ms": 120000,
-  "rest_kernel_ms": 1240,
+  "rest_kernel_ms": 1575,
   "axioms": [
    "propext",
    "Classical.choice",
@@ -133,7 +133,7 @@
   "general_constants": 230,
   "checker_constants": 26
  },
- "seconds": 43.5,
- "time": "2026-10-23T09:16:45+0100",
+ "seconds": 31.0,
+ "time": "2026-10-23T09:39:11+0100",
  "replayed_constants": 365
 }

@@ -11,7 +11,7 @@ give the checker's count and its bill (`runs_check`).
 
 namespace LinearMaxK
 
-open CompactCheck
+open CompactCheck Common
 
 /-- The counting interpreter, which the acceptance service runs. -/
 abbrev K := Interp.counting

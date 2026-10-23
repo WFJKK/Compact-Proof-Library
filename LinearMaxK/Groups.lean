@@ -11,7 +11,7 @@ partition the inputs (`countP_by_group`).
 
 namespace LinearMaxK
 
-open CompactCheck
+open CompactCheck Common
 
 theorem mem_allInputs_replicate : ∀ {k V : ℕ} {x : Input},
     x ∈ allInputs (List.replicate k V) ↔ x.length = k ∧ ∀ t ∈ x, t < V

@@ -1,4 +1,4 @@
-import LinearMaxK.Basic
+import Common.Basic
 
 /-!
 # The family: linear max-of-k networks
@@ -15,7 +15,7 @@ needs.
 
 namespace LinearMaxK
 
-open CompactCheck
+open CompactCheck Common
 
 /-! ## The graph and the weights -/
 

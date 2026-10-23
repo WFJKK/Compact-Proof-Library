@@ -14,7 +14,7 @@ For weights that are not well formed, the guard fails and the count is zero (`co
 
 namespace LinearMaxK
 
-open CompactCheck
+open CompactCheck Common
 
 /-! ## The minimum the checker folds -/
 
