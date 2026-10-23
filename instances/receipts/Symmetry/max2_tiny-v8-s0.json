@@ -1,0 +1,131 @@
+{
+ "schema": "open-lane-receipt-v1",
+ "candidate_id": "library-symmetrymax2tiny",
+ "status": "accepted",
+ "reason": null,
+ "claim_kind": "performance",
+ "certified_count": 64,
+ "domain_size": 64,
+ "claimed_count": 64,
+ "network": "max2_tiny-v8-s0",
+ "theorem": "Candidate.SymmetryMax2Tiny.performance",
+ "statement": null,
+ "axioms": [
+  "propext",
+  "Classical.choice",
+  "Quot.sound"
+ ],
+ "isolation": "landlock",
+ "steps": [
+  {
+   "step": "protected",
+   "module": "Protected.N_max2_tiny_v8_s0_c64",
+   "cached": true
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.Common.Basic",
+   "rc": 0,
+   "seconds": 2.5,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Family",
+   "rc": 0,
+   "seconds": 3.1,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Groups",
+   "rc": 0,
+   "seconds": 2.2,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.Symmetry.Sorted",
+   "rc": 0,
+   "seconds": 2.5,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.Symmetry.Checker",
+   "rc": 0,
+   "seconds": 2.5,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.SymmetryMax2Tiny",
+   "rc": 0,
+   "seconds": 11.8,
+   "timed_out": false
+  },
+  {
+   "step": "kernel",
+   "rc": 0,
+   "seconds": 12.1,
+   "timed_out": false
+  },
+  {
+   "step": "closure",
+   "rc": 0,
+   "seconds": 1.4,
+   "timed_out": false
+  },
+  {
+   "step": "score",
+   "rc": 0,
+   "seconds": 13.3,
+   "timed_out": false
+  }
+ ],
+ "digests": {
+  "commit": "c11b8e40f3c8d9b78ff144de8c1edb66dc3e75bb",
+  "toolchain": "lean:bf8d54e4714cc4b0",
+  "lean_project": "d36f4fb12b0bb567",
+  "policy": "cde74948a64643d3",
+  "acceptcheck": "ae878fc22796d840",
+  "modules": {
+   "Candidate.Common.Basic": "4c3283befc2cc83fa3a1301c1d14e392e5c24a81c3dac732e38ef16df971b15e",
+   "Candidate.LinearMaxK.Family": "f4f8addb0b43b8e3c128f1a16f7d76ef00a48ebbbeea83ba0cf189e0706885bc",
+   "Candidate.LinearMaxK.Groups": "f7cc2fd139b9ce34d616f4afa77fdc2c89abe6530c8822dcfb49aa9813f63b1e",
+   "Candidate.Symmetry.Checker": "1ccd8ab94abea1fa18eec36411ea145d5131b69b3ebc68b280edbbfa64d1b835",
+   "Candidate.Symmetry.Sorted": "1b0d158320620293c5096dfdab2c0504d11bf574868634c1c04830db6297b4bf",
+   "Candidate.SymmetryMax2Tiny": "56c2ce737e4299de3c83a5b202563d6abda4c0985c409c101e725aae26e01db1"
+  },
+  "network_file": "af7beeae9cfa75951c881d4ec320d6384648984033f33209eb2bcfcb05557346"
+ },
+ "score_eligible": true,
+ "execution_assurance": "kernel_checked_instance",
+ "cost_model": "cost-v3",
+ "scoring": {
+  "status": "scored",
+  "reason": null,
+  "assurance": "kernel_checked_instance",
+  "cost_model": "cost-v3",
+  "bill": 2268,
+  "extract": 80,
+  "read": 0,
+  "length": 2348,
+  "description_size": 917,
+  "size_budget": 8512,
+  "general_kernel_ms": 154,
+  "general_kernel_budget_ms": 120000,
+  "rest_kernel_ms": 11230,
+  "axioms": [
+   "propext",
+   "Classical.choice",
+   "Quot.sound"
+  ],
+  "closure_visited": 68,
+  "general_constants": 61,
+  "checker_constants": 11
+ },
+ "seconds": 53.5,
+ "time": "2026-10-23T10:57:42+0100",
+ "replayed_constants": 269
+}

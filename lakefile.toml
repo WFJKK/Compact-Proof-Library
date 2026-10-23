@@ -1,7 +1,7 @@
 name = "CompactProofLibrary"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["Common", "LinearMaxK", "BruteForce", "LinearMaxKPlans", "Instances"]
+defaultTargets = ["Common", "LinearMaxK", "BruteForce", "LinearMaxKPlans", "Symmetry", "Instances"]
 
 [leanOptions]
 pp.unicode.fun = true
@@ -30,6 +30,9 @@ name = "BruteForce"
 [[lean_lib]]
 name = "LinearMaxKPlans"
 
+[[lean_lib]]
+name = "Symmetry"
+
 # The protected modules of the instances, as the acceptance service generates them
 # (CompactCheck's scripts/make_protected.py), so that the instances build here too.
 [[lean_lib]]
@@ -42,7 +45,8 @@ leanOptions = {weak.linter.mathlibStandardSet = false}
 [[lean_lib]]
 name = "Instances"
 srcDir = "instances"
-globs = ["LinearMaxKInstances.+", "BruteForceInstances.+", "LinearMaxKPlansInstances.+"]
+globs = ["LinearMaxKInstances.+", "BruteForceInstances.+", "LinearMaxKPlansInstances.+",
+  "SymmetryInstances.+"]
 
 # `lake build measure`, then `lake exe measure <network.json> ...`: the checker on exported
 # networks, compiled (not a default target: linking it compiles the Mathlib modules it imports).

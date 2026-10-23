@@ -32,6 +32,7 @@ length the cost formula gives.
 | 1, `LinearMaxK/` | an exact test for each group of inputs with the same largest token | linear max-of-k, every `k`, `V`, `d` | 03, contract and interval, for every `k` |
 | 2, `BruteForce/` | one forward pass on every input | every network and task | 01, brute force |
 | 3, `LinearMaxKPlans/` | entry 1's test on chosen pieces of groups | linear max-of-k, every `k`, `V`, `d` | 03 with splitting, 04 with a budget |
+| 4, `Symmetry/` | one forward pass per sorted input, weighted by its reorderings | every network that sums its input over the positions first | 02, symmetry |
 
 ## Entry 1: linear max-of-k (`LinearMaxK/`)
 
@@ -211,6 +212,38 @@ groups is entry 1.
 The receipt is in `instances/receipts/LinearMaxKPlans/`: description size 5,506 of a budget of
 8,512.
 
+## Entry 4: symmetry (`Symmetry/`)
+
+### The method
+
+For a network that sums its one-hot input over the positions before anything else
+(`symmetricNet`), and a task whose label does not depend on the order of the tokens, an input and
+its reorderings are answered alike (CompactCheck's `singleOk_perm`). The checker runs the
+single-input rule on the sorted inputs only, `(V + k - 1).choose k` of them, and counts each that
+passes with its number of reorderings, `mult V k x`.
+
+### The theorems
+
+* `check_sound` (`Checker.lean`): for every such network, every such task on `k` positions of `V`
+  tokens, all weights and all certificates, the count is at most `numCorrect`.
+* `check_billed`: when a forward pass can be billed, at `s` operations, the count is the number of
+  inputs the single-input rule passes, as for brute force, and the bill is
+  `(V + k - 1).choose k · s`.
+* `check_billed_maxK` (`MaxK.lean`): on the linear max-of-k family with well-formed weights, the count
+  is exactly `numCorrect` and the bill is `(V + k - 1).choose k · (k d + d² + d V + V - 1)`.
+* `countP_perm`, `length_sortedFrom` (`Sorted.lean`): `mult V k x` is the number of reorderings of
+  `x`, and there are `(V - lo + k - 1).choose k` sorted inputs with tokens in `[lo, V)`.
+
+### Instances
+
+| network | k | V | d | certified | bill | length | checked by |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `max2_tiny-v8-s0` | 2 | 8 | 4 | 64 | 2,268 | 2,348 | kernel; accepted and scored |
+
+The receipt is in `instances/receipts/Symmetry/`: description size 917 of a budget of 8,512. On a
+`max2-v64` network the bill is 2,080 forward passes, 1,362,400 (length 1,363,488): about half of
+brute force, as the pipeline's baseline 02 predicts.
+
 ## Layout
 
 | file | what it is |
@@ -230,6 +263,9 @@ The receipt is in `instances/receipts/LinearMaxKPlans/`: description size 5,506 
 | `LinearMaxKPlans/Runs.lean` | what it computes, and what it costs |
 | `LinearMaxKPlans/Sound.lean` | soundness |
 | `LinearMaxKPlans/Exact.lean` | exactness, the bill, the plan of whole groups |
+| `Symmetry/Sorted.lean` | sorted inputs, how many there are, and the reorderings of an input |
+| `Symmetry/Checker.lean` | entry 4's checker, its soundness, its count and its bill |
+| `Symmetry/MaxK.lean` | symmetry on the linear max-of-k family: exact, and its bill |
 | `instances/` | protected modules, instances, network files, receipts |
 | `Measure.lean` | `lake exe measure`: entry 1's checker on exported networks, compiled |
 | `scripts/make_candidate.py` | packages an instance for the acceptance service |
@@ -270,8 +306,6 @@ with the checker's own reader.
 
 ## Next
 
-* Symmetry (the pipeline's baseline 02): one forward pass per sorted input, weighted by its number of
-  permutations, for every `k`.
 * Kernel-checked instances of entry 1 for the other development seeds and for `V = 128`, with
   `scripts/make_table_instance.py` (at `V = 128` the kernel's work is about 30 times larger).
 * Networks with `k = 3, 4`: apart from the guard, entry 1's cost does not grow with `k`.
