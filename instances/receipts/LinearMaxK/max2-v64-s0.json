@@ -1,0 +1,155 @@
+{
+ "schema": "open-lane-receipt-v1",
+ "candidate_id": "library-linearmaxkmax2v64s0",
+ "status": "accepted",
+ "reason": null,
+ "claim_kind": "performance",
+ "certified_count": 4095,
+ "domain_size": 4096,
+ "claimed_count": 4095,
+ "network": "max2-v64-s0",
+ "theorem": "Candidate.LinearMaxKMax2V64S0.performance",
+ "statement": null,
+ "axioms": [
+  "propext",
+  "Classical.choice",
+  "Quot.sound"
+ ],
+ "isolation": "landlock",
+ "steps": [
+  {
+   "step": "protected",
+   "module": "Protected.N_max2_v64_s0_c4095",
+   "cached": true
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.Common.Basic",
+   "rc": 0,
+   "seconds": 2.3,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Family",
+   "rc": 0,
+   "seconds": 3.1,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Checker",
+   "rc": 0,
+   "seconds": 2.0,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Groups",
+   "rc": 0,
+   "seconds": 2.3,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Runs",
+   "rc": 0,
+   "seconds": 4.2,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Sound",
+   "rc": 0,
+   "seconds": 2.4,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Exact",
+   "rc": 0,
+   "seconds": 2.5,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Table",
+   "rc": 0,
+   "seconds": 3.3,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxKMax2V64S0",
+   "rc": 0,
+   "seconds": 247.8,
+   "timed_out": false
+  },
+  {
+   "step": "kernel",
+   "rc": 0,
+   "seconds": 219.5,
+   "timed_out": false
+  },
+  {
+   "step": "closure",
+   "rc": 0,
+   "seconds": 1.5,
+   "timed_out": false
+  },
+  {
+   "step": "score",
+   "rc": 0,
+   "seconds": 219.9,
+   "timed_out": false
+  }
+ ],
+ "digests": {
+  "commit": "c11b8e40f3c8d9b78ff144de8c1edb66dc3e75bb",
+  "toolchain": "lean:bf8d54e4714cc4b0",
+  "lean_project": "d36f4fb12b0bb567",
+  "policy": "cde74948a64643d3",
+  "acceptcheck": "ae878fc22796d840",
+  "modules": {
+   "Candidate.Common.Basic": "4c3283befc2cc83fa3a1301c1d14e392e5c24a81c3dac732e38ef16df971b15e",
+   "Candidate.LinearMaxK.Checker": "8a597cef6916d2b91172c0116a982e6a3cba71e1e2c9064721bed91890910d31",
+   "Candidate.LinearMaxK.Exact": "f44c9ed7260c953861486ebd232fe524e3e340e06d62f6eddcaa1a9d9a3a970f",
+   "Candidate.LinearMaxK.Family": "f4f8addb0b43b8e3c128f1a16f7d76ef00a48ebbbeea83ba0cf189e0706885bc",
+   "Candidate.LinearMaxK.Groups": "f7cc2fd139b9ce34d616f4afa77fdc2c89abe6530c8822dcfb49aa9813f63b1e",
+   "Candidate.LinearMaxK.Runs": "7e5ba8a63f1df5f924903e8b49149f198473898490a912041fadfe73831f1487",
+   "Candidate.LinearMaxK.Sound": "908ed0b0750683448cca3a7c2e2ac5273a00af38d651c0686232b9c41668aebf",
+   "Candidate.LinearMaxK.Table": "4a6a967bfc29f1b6c89e352642b151f9979e24059bfdcc1fb4b8f555c2e809b1",
+   "Candidate.LinearMaxKMax2V64S0": "16b986b65b83339fbe6d358a4f575e98ac54f6e9fc9c7f122478a0f5283bd421"
+  },
+  "network_file": "ff1a5473c5d13410e64783307ca2e77ed91ecc3adebbf7862f96fd9df1b3d1fd"
+ },
+ "score_eligible": true,
+ "execution_assurance": "kernel_checked_instance",
+ "cost_model": "cost-v3",
+ "scoring": {
+  "status": "scored",
+  "reason": null,
+  "assurance": "kernel_checked_instance",
+  "cost_model": "cost-v3",
+  "bill": 307728,
+  "extract": 1088,
+  "read": 0,
+  "length": 308816,
+  "description_size": 4285,
+  "size_budget": 12544,
+  "general_kernel_ms": 509,
+  "general_kernel_budget_ms": 120000,
+  "rest_kernel_ms": 217111,
+  "axioms": [
+   "propext",
+   "Classical.choice",
+   "Quot.sound"
+  ],
+  "closure_visited": 96,
+  "general_constants": 230,
+  "checker_constants": 26
+ },
+ "seconds": 713.1,
+ "time": "2026-10-23T10:31:45+0100",
+ "replayed_constants": 786
+}

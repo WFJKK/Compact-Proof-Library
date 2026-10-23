@@ -1,0 +1,171 @@
+{
+ "schema": "open-lane-receipt-v1",
+ "candidate_id": "library-linearmaxkplansmax2tinybudget",
+ "status": "accepted",
+ "reason": null,
+ "claim_kind": "performance",
+ "certified_count": 20,
+ "domain_size": 64,
+ "claimed_count": 20,
+ "network": "max2_tiny-v8-s0",
+ "theorem": "Candidate.LinearMaxKPlansMax2TinyBudget.performance",
+ "statement": null,
+ "axioms": [
+  "propext",
+  "Classical.choice",
+  "Quot.sound"
+ ],
+ "isolation": "landlock",
+ "steps": [
+  {
+   "step": "protected",
+   "module": "Protected.N_max2_tiny_v8_s0_c20",
+   "cached": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.Common.Basic",
+   "rc": 0,
+   "seconds": 2.5,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Family",
+   "rc": 0,
+   "seconds": 3.1,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Checker",
+   "rc": 0,
+   "seconds": 2.2,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Groups",
+   "rc": 0,
+   "seconds": 2.5,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Runs",
+   "rc": 0,
+   "seconds": 4.1,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxK.Sound",
+   "rc": 0,
+   "seconds": 2.4,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxKPlans.Pieces",
+   "rc": 0,
+   "seconds": 2.8,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxKPlans.Checker",
+   "rc": 0,
+   "seconds": 2.3,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxKPlans.Runs",
+   "rc": 0,
+   "seconds": 2.7,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxKPlans.Sound",
+   "rc": 0,
+   "seconds": 2.7,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.LinearMaxKPlansMax2TinyBudget",
+   "rc": 0,
+   "seconds": 3.2,
+   "timed_out": false
+  },
+  {
+   "step": "kernel",
+   "rc": 0,
+   "seconds": 4.3,
+   "timed_out": false
+  },
+  {
+   "step": "closure",
+   "rc": 0,
+   "seconds": 1.5,
+   "timed_out": false
+  },
+  {
+   "step": "score",
+   "rc": 0,
+   "seconds": 4.5,
+   "timed_out": false
+  }
+ ],
+ "digests": {
+  "commit": "c11b8e40f3c8d9b78ff144de8c1edb66dc3e75bb",
+  "toolchain": "lean:bf8d54e4714cc4b0",
+  "lean_project": "d36f4fb12b0bb567",
+  "policy": "cde74948a64643d3",
+  "acceptcheck": "ae878fc22796d840",
+  "modules": {
+   "Candidate.Common.Basic": "4c3283befc2cc83fa3a1301c1d14e392e5c24a81c3dac732e38ef16df971b15e",
+   "Candidate.LinearMaxK.Checker": "8a597cef6916d2b91172c0116a982e6a3cba71e1e2c9064721bed91890910d31",
+   "Candidate.LinearMaxK.Family": "f4f8addb0b43b8e3c128f1a16f7d76ef00a48ebbbeea83ba0cf189e0706885bc",
+   "Candidate.LinearMaxK.Groups": "f7cc2fd139b9ce34d616f4afa77fdc2c89abe6530c8822dcfb49aa9813f63b1e",
+   "Candidate.LinearMaxK.Runs": "7e5ba8a63f1df5f924903e8b49149f198473898490a912041fadfe73831f1487",
+   "Candidate.LinearMaxK.Sound": "908ed0b0750683448cca3a7c2e2ac5273a00af38d651c0686232b9c41668aebf",
+   "Candidate.LinearMaxKPlans.Checker": "017bb7dc91793c86d2e1e77d51a1d1c96fc000462000ba0867b798e7b5f68a25",
+   "Candidate.LinearMaxKPlans.Pieces": "3503ff1ead09c209d63dc379faf9ef63850d40b66bc738331d7b1846f5528b36",
+   "Candidate.LinearMaxKPlans.Runs": "9e8b443f1696cba0b75280c838d97bbb82f5708e7922798346f3a703b25465fe",
+   "Candidate.LinearMaxKPlans.Sound": "3b7f86f3482364c95dcb39b633942696b1eeadda56c764d8cfb5d77b1f10df72",
+   "Candidate.LinearMaxKPlansMax2TinyBudget": "54549959f74dcbcb4eca04343dd5039df6621150cfbc2dda37d54a96ed0a9c9d"
+  },
+  "network_file": "af7beeae9cfa75951c881d4ec320d6384648984033f33209eb2bcfcb05557346"
+ },
+ "score_eligible": true,
+ "execution_assurance": "kernel_checked_instance",
+ "cost_model": "cost-v3",
+ "scoring": {
+  "status": "scored",
+  "reason": null,
+  "assurance": "kernel_checked_instance",
+  "cost_model": "cost-v3",
+  "bill": 633,
+  "extract": 80,
+  "read": 0,
+  "length": 713,
+  "description_size": 5506,
+  "size_budget": 8512,
+  "general_kernel_ms": 989,
+  "general_kernel_budget_ms": 120000,
+  "rest_kernel_ms": 1408,
+  "axioms": [
+   "propext",
+   "Classical.choice",
+   "Quot.sound"
+  ],
+  "closure_visited": 120,
+  "general_constants": 296,
+  "checker_constants": 43
+ },
+ "seconds": 47.4,
+ "time": "2026-10-23T10:43:57+0100",
+ "replayed_constants": 535
+}

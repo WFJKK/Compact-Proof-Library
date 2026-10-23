@@ -31,6 +31,7 @@ length the cost formula gives.
 | --- | --- | --- | --- |
 | 1, `LinearMaxK/` | an exact test for each group of inputs with the same largest token | linear max-of-k, every `k`, `V`, `d` | 03, contract and interval, for every `k` |
 | 2, `BruteForce/` | one forward pass on every input | every network and task | 01, brute force |
+| 3, `LinearMaxKPlans/` | entry 1's test on chosen pieces of groups | linear max-of-k, every `k`, `V`, `d` | 03 with splitting, 04 with a budget |
 
 ## Entry 1: linear max-of-k (`LinearMaxK/`)
 
@@ -99,13 +100,15 @@ either, while brute force (entry 2) grows as `V^k`.
 | network | k | V | d | certified | correct | bill | length | brute force |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `max2_tiny-v8-s0` | 2 | 8 | 4 | 64 | 64 | 1,072 | 1,152 | 4,112 |
-| `max2-v64`, 6 development seeds | 2 | 64 | 8 | 4,095 or 4,092 | the same | 307,728 | 308,816 | 2,683,968 |
+| `max2-v64-s0` | 2 | 64 | 8 | 4,095 | 4,095 | 307,728 | 308,816 | 2,683,968 |
+| `max2-v64`, 5 other development seeds | 2 | 64 | 8 | 4,095 or 4,092 | the same | 307,728 | 308,816 | 2,683,968 |
 | `max2-v128`, 6 development seeds | 2 | 128 | 16 | 16,383 | 16,383 | 2,427,040 | 2,431,392 | 40,358,144 |
 
-* What is proved: for the tiny network, everything in its row; it is the kernel-checked instance
-  `instances/LinearMaxKInstances/Max2Tiny.lean`. For the others, the bill and the length (they follow
-  from `check_billed` and `bill_eq` for every well-formed network of these sizes), while the certified
-  counts are measured with `lake exe measure`, the same checker compiled.
+* What is proved: everything in the first two rows. They are kernel-checked instances
+  (`instances/LinearMaxKInstances/`), and the acceptance service accepted and scored both; the
+  receipts are in `instances/receipts/LinearMaxK/`. For the other rows, the bill and the length
+  (they follow from `check_billed` and `bill_eq` for every well-formed network of these sizes),
+  while the certified counts are measured with `lake exe measure`, the same checker compiled.
 * The length is the bill plus the number of weight entries, which the open lane charges once for
   extracting the weights. The brute force column is entry 2's length on the same network,
   `V^k (k d + d² + d V + V - 1)` plus the same extraction. (The zoo's `B` for these networks,
@@ -113,12 +116,20 @@ either, while brute force (entry 2) grows as `V^k`.
 * `correct` is the zoo's exact count of correct inputs. On every development network the checker
   certifies all of them: the inputs these networks get wrong fill whole groups (the group of the token
   0, or the groups of the tokens 0 and 1).
-* The tiny instance proves the target of the protected module, and the acceptance service accepted
-  and scored it: receipt in `instances/receipts/LinearMaxK/`, description size 4,285 of a budget of
-  8,512, general layer replayed in 0.6 s.
-* A single `decide +kernel` over the 300,000 charged operations of a `V = 64` instance ran out of
-  memory here (8 GB; the acceptance service allows 12 GB), so a kernel-checked instance at that size
-  is to be split into many small theorems; that is the next step.
+* The receipts' description size is 4,285, of a budget of 8,512 for the tiny network and 12,544 for
+  `max2-v64-s0`.
+
+### Large instances
+
+The kernel cannot evaluate the checker on a `V = 64` network in one `decide`: the 300,000 charged
+operations, in exact rational arithmetic, run out of memory. `Table.lean` splits the evaluation into
+small statements. The weights of an exported network are integers times a power of two, one exponent
+per tensor, so `M = 2^e · MZ` for the integer matrix `MZ` of the mantissas, and every test has the
+same outcome on `MZ` as on `M`. An instance then proves, each by its own `decide`, one theorem per row
+of `MZ`, one per group's tests, and one for the guard, and `check_billed_of_table` assembles them.
+`scripts/make_table_instance.py` writes such an instance for any network of the family. The one for
+`max2-v64-s0` compiles in about 4 minutes and 3 GB, one theorem at a time to stay within the
+acceptance service's 12 GB; the service replays it in 3.6 minutes.
 
 ## Entry 2: brute force (`BruteForce/`)
 
@@ -149,6 +160,57 @@ stays sound.
 
 The receipt is in `instances/receipts/BruteForce/`: description size 378 of a budget of 8,512.
 
+## Entry 3: plans (`LinearMaxKPlans/`)
+
+### The method
+
+A plan is a list of pieces `⟨m, lo, hi⟩`: the inputs whose largest token is `m` and whose smallest
+token is in `[lo, hi]`. The checker makes entry 1's test on each piece instead of each group, and
+counts the pieces that pass. For an output `j ≠ m`, the test of
+
+* a tail, `hi = m` (the inputs of the group whose tokens are all at least `lo`), is
+
+      D(m) + (k - 1) · min_{lo ≤ t ≤ m} D(t) > 0
+
+* a band, `hi < m`, is the following, with `A` the minimum of `D` over `[lo, hi]` and `B` its
+  minimum over `[lo, m]`:
+
+      D(m) + A + (k - 2) · B > 0
+
+The plan is public data, fixed with the checker. The checker first checks that it is valid: every
+piece has `lo ≤ hi ≤ m < V`, and two pieces of one group have disjoint ranges. For an invalid plan it
+certifies nothing.
+
+The pipeline's other max-of-2 baselines are plans. Baseline 03 with its knob splits a group that
+holds a wrong input into bands, until the wrong inputs are isolated. Baseline 04 spends a budget:
+whole groups from the largest token down, then one tail of the next group. The plan of all whole
+groups is entry 1.
+
+### The theorems
+
+* `check_sound` (`Sound.lean`): for every graph of the family, every plan, all weights and all
+  certificates, the count is at most `numCorrect`.
+* `check_billed` (`Exact.lean`): on well-formed weights and a valid plan, the count is the sum of
+  the sizes of the pieces whose tests pass, if the guard input is answered correctly, and the bill is
+  `billPlan k V d plan`.
+* `pieceOk_iff`: for a tail, or for a band when `k = 2`, the tests pass iff the network answers every
+  input of the piece correctly. For `k > 2` the test of a band is sufficient only.
+* `countP_mem` (`Pieces.lean`): a piece has `tailSize k m lo - tailSize k m (hi + 1)` inputs, where
+  `tailSize k m a = (m + 1 - a)^k - (m - a)^k`.
+* `billPlan`: the guard and the columns as in entry 1, two literals, and for each piece
+  `(V - 1) (c + 1) + 1`, with `c = 2 (m - lo) + 3` for a tail and `2 (m - lo) + 4` for a band.
+* `planOk_groups`, `billPlan_groups`: the plan of all whole groups is valid, and its bill is entry
+  1's plus one.
+
+### Instances
+
+| network | plan | certified | bill | length | checked by |
+| --- | --- | --- | --- | --- | --- |
+| `max2_tiny-v8-s0` | baseline 04 at knob 0.75: `⟨7, 0, 7⟩`, `⟨6, 4, 6⟩` | 20 | 633 | 713 | kernel; accepted and scored |
+
+The receipt is in `instances/receipts/LinearMaxKPlans/`: description size 5,506 of a budget of
+8,512.
+
 ## Layout
 
 | file | what it is |
@@ -160,17 +222,26 @@ The receipt is in `instances/receipts/BruteForce/`: description size 378 of a bu
 | `LinearMaxK/Runs.lean` | what each part of the checker computes, and what it costs |
 | `LinearMaxK/Sound.lean` | soundness |
 | `LinearMaxK/Exact.lean` | exactness, completeness, the bill in closed form |
+| `LinearMaxK/Table.lean` | the count from a table of integers, for instances too large for one `decide` |
 | `BruteForce/Checker.lean` | entry 2's checker, its soundness and its bill, for every network |
 | `BruteForce/MaxK.lean` | brute force on the linear max-of-k family: exact, and its bill |
+| `LinearMaxKPlans/Pieces.lean` | pieces of groups: membership, sizes, valid plans |
+| `LinearMaxKPlans/Checker.lean` | entry 3's checker |
+| `LinearMaxKPlans/Runs.lean` | what it computes, and what it costs |
+| `LinearMaxKPlans/Sound.lean` | soundness |
+| `LinearMaxKPlans/Exact.lean` | exactness, the bill, the plan of whole groups |
 | `instances/` | protected modules, instances, network files, receipts |
 | `Measure.lean` | `lake exe measure`: entry 1's checker on exported networks, compiled |
 | `scripts/make_candidate.py` | packages an instance for the acceptance service |
+| `scripts/make_table_instance.py` | writes a kernel-checked instance of entry 1 for a large network |
 
 ## Build
 
     lake exe cache get          # Mathlib's prebuilt files
     lake build                  # the entries and the instances; every proof is checked
     lake build measure          # optional: the measuring tool
+
+The `max2-v64-s0` instance takes about 4 minutes and 3 GB; everything else takes seconds.
 
 ## Submitting an instance to the acceptance service
 
@@ -183,7 +254,7 @@ The script copies the instance and the library modules it imports under `Candida
 requires, and writes the manifest of a scored submission. The service compiles them in a sandbox,
 replays every constant through the kernel, checks that the checker uses only the counted language,
 and has the kernel accept the soundness theorem and the instance theorem at the statements it builds
-itself.
+itself. For a network of the zoo, `--model` is the model folder, `models/max2`.
 
 ## What has to be trusted
 
@@ -199,8 +270,8 @@ with the checker's own reader.
 
 ## Next
 
-* Kernel-checked instances of entry 1 at `V = 64`, split into theorems per row of `M` and per group.
-* Plans (the pipeline's baselines 03 with splitting and 04 with a budget): entry 1's exact test on
-  chosen pieces of groups, sound for every plan, with the bill a function of the plan.
-* Symmetry (baseline 02): one forward pass per sorted input, weighted by its number of permutations.
+* Symmetry (the pipeline's baseline 02): one forward pass per sorted input, weighted by its number of
+  permutations, for every `k`.
+* Kernel-checked instances of entry 1 for the other development seeds and for `V = 128`, with
+  `scripts/make_table_instance.py` (at `V = 128` the kernel's work is about 30 times larger).
 * Networks with `k = 3, 4`: apart from the guard, entry 1's cost does not grow with `k`.
