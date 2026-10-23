@@ -1,0 +1,41 @@
+name = "CompactProofLibrary"
+version = "0.1.0"
+keywords = ["math"]
+defaultTargets = ["LinearMaxK", "LinearMaxKInstances"]
+
+[leanOptions]
+pp.unicode.fun = true
+relaxedAutoImplicit = false
+weak.linter.mathlibStandardSet = true
+weak.linter.style.header = false
+maxSynthPendingDepth = 3
+
+# The specification (Spec.lean: `Correct`, `numCorrect`), the exact evaluator and the counted
+# language are CompactCheck's, pinned to one commit: entries prove theorems about those definitions,
+# never about copies of them.
+[[require]]
+name = "CompactCheck"
+git = "https://github.com/WFJKK/Auto-Research-Compact-Proof-in-Lean"
+rev = "c11b8e40f3c8d9b78ff144de8c1edb66dc3e75bb"
+
+[[lean_lib]]
+name = "LinearMaxK"
+
+# The protected modules of the instances, as the acceptance service generates them
+# (CompactCheck's scripts/make_protected.py), so that the instances build here too.
+[[lean_lib]]
+name = "Protected"
+srcDir = "instances"
+globs = ["Protected.+"]
+leanOptions = {weak.linter.mathlibStandardSet = false}
+
+[[lean_lib]]
+name = "LinearMaxKInstances"
+srcDir = "instances"
+globs = ["LinearMaxKInstances.+"]
+
+# `lake build measure`, then `lake exe measure <network.json> ...`: the checker on exported
+# networks, compiled (not a default target: linking it compiles the Mathlib modules it imports).
+[[lean_exe]]
+name = "measure"
+root = "Measure"
