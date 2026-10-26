@@ -40,7 +40,13 @@ length the cost formula gives.
 | 3, `LinearMaxKPlans/` | entry 1's test on chosen pieces of groups | linear max-of-k, every `k`, `V`, `d` | 03 with splitting, 04 with a budget |
 | 4, `Symmetry/` | one forward pass per sorted input, weighted by its reorderings | networks that sum their input over the positions first: the linear ones, not the attention ones | 02, symmetry |
 | 5, `LinearMaxKColumnMax/` | tests on column maxima of `M`, against all outputs at once | linear max-of-k, every `k`, `V`, `d` | none: an agent's open-lane proof (`Full64`), generalised |
-| 6, `AttnClasses/` | path tables, margins, bounds on `exp`, one test per class of inputs | one-head attention, max or min of `n` tokens, every `n`, `V`, `d`, `h` | none; compare Gross et al.'s cubic proof |
+| 6, `AttnClasses/` | path tables, margins, bounds on `exp`, one test per class of inputs | one-head attention, max or min of `n` tokens, every `n`, `V`, `d`, `h` | none; compare entry 7 |
+| 7, `GrossCubic/` | Gross et al.'s cubic proof: bounds pessimised per query, largest and non-maximal token, worst positions, convexity | one-head attention, as entry 6, with `V, n ≥ 2` | their cubic proof: the same counts on all 54 development networks |
+| 8, `PathBrute/` | every input from the path tables, one test per input and other output | one-head attention, as entry 6 | 01, brute force |
+
+Gross et al.'s proofs for Max-of-K on the one-head attention models, from their code (at `fb5b181`):
+their brute force, the model run on every input, is entry 2; their cubic proof is entry 7; their
+sub-cubic proofs are in progress.
 
 ## Entry 1: linear max-of-k (`LinearMaxK/`)
 
@@ -435,12 +441,10 @@ the inputs themselves (the query's rank, the label's rank and the other rank fix
 second loss applies only when the query holds the label. At `n = 4` the classes are far fewer than
 the inputs: 8,416 for 65,536 at `V = 16`, and 528,256 for 16,777,216 at `V = 64`.
 
-Gross et al.'s cubic proof, as the pipeline describes it (`results/gross-cubic-2026-10-16`),
-pessimises once per query token, largest token, non-maximal token and number of copies of the
-largest, and bounds the attention by a convexity argument: the head's output is a weighted average.
-Here the positions are kept apart (the networks have positional embeddings, and `n` is small), and
-the softmax is not bounded on its own: the test is on the sum of each position's `exp(S)` times its
-margin, the numerator of the weighted average.
+Gross et al.'s cubic proof (entry 7) pessimises the positional path over the positions and the
+paths over the outputs, once per query token, largest token and non-maximal token, and covers the
+inputs with several non-maximal tokens by a convexity argument. Here the positions are kept apart
+(the networks have positional embeddings, and `n` is small), and each class gets its own test.
 
 ### The theorems
 
@@ -489,33 +493,212 @@ networks of the four zoos, `exp` accepted every score and the bill is `bill V n 
 per row, medians and the lowest; `share` is the share of the inputs the network answers correctly
 that the proof certifies.
 
-| task, size | d = h | bill | length | B / length | share: median, lowest | cubic proof: B / length | its share: median, lowest |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| max of 2, v64 | 32 | 766,241 | 774,497 | 45.9 | 98.3%, 96.5% | 6.3 | 99.1%, 98.1% |
-| max of 2, v128 | 32 | 2,541,121 | 2,553,473 | 69.2 | 96.7%, 96.1% | 4.3 | 98.3%, 98.0% |
-| min of 2, v64 | 32 | 766,241 | 774,497 | 45.9 | 98.7%, 98.2% | 6.3 | 99.2%, 99.0% |
-| min of 2, v128 | 32 | 2,541,121 | 2,553,473 | 69.2 | 96.3%, 83.6% | 4.3 | 98.3%, 89.1% |
-| max of 4, v16 | 8 | 66,323 | 66,867 | 974 | 99.7%, 98.9% | 223 | 99.5%, 98.9% |
-| max of 4, v24 | 12 | 206,475 | 207,675 | 3,294 | 99.6%, 99.2% | 705 | 99.2%, 98.8% |
-| max of 4, v64 | 32 | 3,497,795 | 3,506,115 | 62,982 | 97.7%, 97.3% | 12,283 | 97.5%, 96.8% |
-| min of 4, v16 | 8 | 66,323 | 66,867 | 974 | 99.5%, 98.5% | 223 | 99.4%, 98.0% |
-| min of 4, v24 | 12 | 206,475 | 207,675 | 3,294 | 99.7%, 99.5% | 705 | 99.5%, 99.4% |
+| task, size | d = h | bill | length | B / length | share: median, lowest |
+| --- | --- | --- | --- | --- | --- |
+| max of 2, v64 | 32 | 766,241 | 774,497 | 45.9 | 98.3%, 96.5% |
+| max of 2, v128 | 32 | 2,541,121 | 2,553,473 | 69.2 | 96.7%, 96.1% |
+| min of 2, v64 | 32 | 766,241 | 774,497 | 45.9 | 98.7%, 98.2% |
+| min of 2, v128 | 32 | 2,541,121 | 2,553,473 | 69.2 | 96.3%, 83.6% |
+| max of 4, v16 | 8 | 66,323 | 66,867 | 974 | 99.7%, 98.9% |
+| max of 4, v24 | 12 | 206,475 | 207,675 | 3,294 | 99.6%, 99.2% |
+| max of 4, v64 | 32 | 3,497,795 | 3,506,115 | 62,982 | 97.7%, 97.3% |
+| min of 4, v16 | 8 | 66,323 | 66,867 | 974 | 99.5%, 98.5% |
+| min of 4, v24 | 12 | 206,475 | 207,675 | 3,294 | 99.7%, 99.5% |
 
 * What is proved: the bill and the length, for every well-formed network of these sizes on which
   `exp` accepts every score (`check_billed`); the shares are measurements.
-* `B` is the zoo's brute-force length, within 0.4% of entry 2's. The cubic proof's numbers are from
-  the pipeline's run of Gross et al.'s code on the same networks (`results/gross-cubic-2026-10-16`).
-  Its length is the pipeline's count of its operations (1 per multiply-add, addition or
-  comparison, 3 per softmax entry, a small constant per inner loop), within a factor of about 2
-  of any reasonable count, not a checked bill; its counts come from float arithmetic, checked only
-  against the true number of correct inputs.
-* At `n = 4` entry 6 is 4.4 to 5.1 times shorter than the cubic proof, and certifies more inputs on
-  28 of the 30 networks (on the other two, at most 0.01 points fewer). At `n = 2` it is 7.2 to 16
-  times shorter and certifies fewer on all 24, by 0.05 to 5.5 points. A class is one input there, so
-  the gain over brute force is the path tables alone.
+* `B` is the zoo's brute-force length, within 0.4% of entry 2's.
+* Against Gross et al.'s cubic proof, checked the same way (entry 7): at `n = 4` entry 6 is 1.4 to
+  1.6 times shorter and certifies more inputs on 28 of the 30 networks (on the other two, at most
+  0.01 points fewer). At `n = 2` it is 4.5 to 9.6 times shorter and certifies fewer on all 24, by
+  0.05 to 5.5 points. A class is one input there, so the gain over brute force is the path tables
+  alone.
 * On these networks neither certifies every correct input. The pipeline's hand-built `token_convex`
   proofs do, at `n = 4`: at `B/460` to `B/497` (v16), `B/1,766` to `B/1,818` (v24) and `B/14,836`
   (v64), 1.8 to 4.2 times longer than entry 6.
+
+## Entry 7: Gross et al.'s cubic proof (`GrossCubic/`)
+
+### The method
+
+The cubic proof of Gross et al. for Max-of-K, from their code
+(`gbmi/exp_max_of_n/verification/cubic.py`, at `fb5b181`, the commit the pipeline ran), on entry
+6's family with at least two tokens and two positions. In their names (their `EQKE` and `EQKP`
+without the scale `c`, which their code applies in the softmax), entry 6's path tables are
+
+    EUPU[q, j] = D[q, j]
+    EVOU[t, j] + PVOU[p, j] = O[t, p, j]
+    c (EQKE[q, t] + EQKP[q, p]) = S[q, t, p]
+
+For a largest token `m` and the other outputs `j`, the proof pessimises the positional path over the
+positions, and each path over the outputs:
+
+    Pp[j] = max_p (PVOU[p, j] - PVOU[p, m])
+    u[q] = max_j EUPU[q, j] - EUPU[q, m]
+    v[t] = max_j (EVOU[t, j] + Pp[j]) - EVOU[t, m]
+
+so that `logit_j - logit_m ≤ u[q] + Σ_p α_p v[x_p]` on an input with query `q` and largest token
+`m`. Cleared of the softmax's denominator, the input is answered correctly if
+
+    Σ_p e^(S_p) (u[q] + v[x_p]) < 0
+
+Each term is bounded from the bounds on `exp` of the score's two parts. With `lo ≤ e ≤ hi`,
+`max(lo y, hi y)` bounds `e y` whatever the sign of `y`. So, with `(lo, hi)` the bounds on
+`e^(c EQKE[q, t])` in the first line and on `e^(c EQKP[q, p])` in the second,
+
+    φ(t) = max(lo y, hi y),  y = u[q] + v[t]
+    ψ(t, p) = max(lo φ(t), hi φ(t))
+
+bound the term of the token `t` at the position `p`. The inputs are taken by their query token, their
+largest token, and the set `A` of the other positions holding a token below the largest:
+
+* `A` empty: the inputs `(m, ..., m)` and `(m, ..., m, q)`, tested output by output, the positional
+  path still pessimised (their cases with only the largest token, and with the query and the largest
+  token);
+* `A` of `c` positions, `1 ≤ c ≤ n - 1` if the query holds `m`, else `1 ≤ c ≤ n - 2`: for each token
+  `k` below `m`, the test
+
+      qb + max_A Σ_(p ∈ A) (ψ(k, p) - ψ(m, p)) < 0
+
+  over the sets `A` of `c` positions (their worst ordering), with `qb` the terms of `m` and of the
+  query:
+
+      qb = Σ_(p < Q) ψ(m, p) + ψ(q, Q)
+
+  An input passes if every token at its positions in `A` passes, and the checker counts `|G|^c`
+  inputs per set, `G` the tokens that pass. Soundness takes the input's worst token, the one with the
+  largest `φ`: its test covers the input (their convexity argument).
+
+The counted language does not multiply counts, so `|G|^c` is assembled from comparisons,
+`Σ_i [i ≤ |G|] (i^c - (i - 1)^c)`. Three differences from their code, none of which changes what is
+certified on the development networks: the test is on the softmax's numerator (for each input the
+same test, the denominator being positive); the worst positions are found by trying every set `A`,
+`2^(n - 1)` per test, where their code sorts the positional scores once per query (so the cost grows
+as `2^n` in `n`, and as `V³` at a fixed `n`); and the arithmetic is exact, with the counted
+language's bounds on `exp` instead of floats.
+
+### The theorems
+
+* `check_sound` (`Sound.lean`): for every graph of the family, the label `max` or `min`, all
+  weights and all certificates, the count is at most `numCorrect`.
+* `check_billed`: on well-formed weights with `V, n ≥ 2`, when `exp` accepts both parts of every
+  score, the count is the sum of the counts the tests give (`countV`), and the bill is
+  `bill V n d h` (`Check.lean`): the tables of queries, keys, scores and paths as entry 6 computes
+  them (the direct path from the query's residual, `V² d`), `3 V² + 3 V n` for the bounds on `exp`,
+  `V - 1` for the numbers `1, ..., V - 1`, and `blockCost V n λ` (`Runs.lean`) for each largest rank
+  `λ`. For a fixed `n` the blocks grow as `V³`.
+* `correct_onlyMax`, `correct_queryOnly`, `correct_withNonmax` (`Correct.lean`): the inputs a passing
+  test vouches for are answered correctly. `class_bound`, `classes_le` (`Sound.lean`): what the
+  checker counts for a class is at most the number of its inputs answered correctly, and the classes
+  are disjoint.
+
+### Instances
+
+| network | n | V | d = h | certified | bill | length | checked by |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `attn_max2_tiny-v8d4-s1` | 2 | 8 | 4 | 64 | 7,419 | 7,555 | kernel; accepted and scored |
+| `attn_min2_tiny-v8d4-s1` | 2 | 8 | 4 | 64 | 7,419 | 7,555 | kernel; accepted and scored |
+| `attn_max4_tiny-v4d4-s0` | 4 | 4 | 4 | 256 | 2,179 | 2,291 | kernel; accepted and scored |
+| `attn_min4_tiny-v4d4-s0` | 4 | 4 | 4 | 256 | 2,179 | 2,291 | kernel; accepted and scored |
+
+The receipts are in `instances/receipts/GrossCubic/`: description size 8,398 of a budget of 8,736
+(`n = 2`) or 8,640 (`n = 4`), so any change to the checker, or to the helpers of entry 6 it uses,
+needs a new acceptance.
+
+### On the development networks
+
+`lake exe measure_gross` runs the checker, compiled. On all 54 development networks `exp` accepted
+every part of every score, the bill is `bill V n d h`, and the count is the count of the pipeline's
+run of their code (`results/gross-cubic-2026-10-16`, in floats), network by network.
+
+| task, size | d = h | bill | length | B / length | share: median, lowest | entry 6's length / this length |
+| --- | --- | --- | --- | --- | --- | --- |
+| max of 2, v64 | 32 | 3,463,263 | 3,471,519 | 10.2 | 99.1%, 98.1% | 0.22 |
+| max of 2, v128 | 32 | 24,515,775 | 24,528,127 | 7.2 | 98.3%, 98.0% | 0.10 |
+| min of 2, v64 | 32 | 3,463,263 | 3,471,519 | 10.2 | 99.2%, 99.0% | 0.22 |
+| min of 2, v128 | 32 | 24,515,775 | 24,528,127 | 7.2 | 98.3%, 89.1% | 0.10 |
+| max of 4, v16 | 8 | 92,457 | 93,001 | 701 | 99.5%, 98.9% | 0.72 |
+| max of 4, v24 | 12 | 304,941 | 306,141 | 2,235 | 99.2%, 98.8% | 0.68 |
+| max of 4, v64 | 32 | 5,615,521 | 5,623,841 | 39,265 | 97.5%, 96.8% | 0.62 |
+| min of 4, v16 | 8 | 92,457 | 93,001 | 701 | 99.4%, 98.0% | 0.72 |
+| min of 4, v24 | 12 | 304,941 | 306,141 | 2,235 | 99.5%, 99.4% | 0.68 |
+
+* What is proved: the bill and the length (`check_billed`); the counts are measurements.
+* At `n = 4` it is 1.4 to 1.6 times longer than entry 6 and certifies fewer inputs on 28 of the 30
+  networks (by 0.006 to 0.99 points), more on two (by at most 0.01 points). At `n = 2` it is 4.5 to
+  9.6 times longer and certifies more on all 24, by 0.05 to 5.5 points.
+* The pipeline's estimate of this proof's length, a count of the operations their code runs, was 1.6
+  (`n = 2`) to 3.2 (`n = 4`) times this bill.
+
+## Entry 8: every input from the path tables (`PathBrute/`)
+
+### The method
+
+Brute force from the path tables instead of forward passes: the tables are computed once, and each
+input's test reads them. Cleared of the softmax's denominator, an input with query `q` and label `ℓ`
+is answered correctly if, for every other output `j`,
+
+    Σ_p e^(S_p) y_p < 0
+    y_p = (D[q, j] - D[q, ℓ]) + (O[x_p, p, j] - O[x_p, p, ℓ])
+
+The checker bounds each term by `max(lo y_p, hi y_p)`, with `lo ≤ e^S ≤ hi` the counted language's
+bounds on `exp` (at `2^-120`), so the test fails only on inputs the network answers wrongly or by a
+margin below that width. The differences `D[q, j] - D[q, l]` and `O[t, p, j] - O[t, p, l]` are
+tabulated once for every `l`; each input then costs `5 n` operations per other output.
+
+Gross et al.'s brute-force proof runs the model on every input: that is entry 2. Their code also
+evaluates inputs from such tables (`run_model_cached`, used by their importance sampling), with each
+position's weight taken relative to the largest token's score at that position, which drops the
+positional part of the attention; here the scores are the network's own.
+
+### The theorems
+
+* `check_sound` (`Sound.lean`): for every graph of the family, the label `max` or `min`, all
+  weights and all certificates, the count is at most `numCorrect`.
+* `check_billed`: on well-formed weights with at least one position, when `exp` accepts every score,
+  the count is the number of inputs whose test passes and the bill is `bill V n d h` (`Runs.lean`):
+  the tables of queries, keys, scores and paths as entry 7 computes them, `n V²` for the paths
+  through the head, `(n + 1) V³` for the differences, `4 n V²` for the bounds on `exp`, and
+  `5 n (V - 1)` per input (`V ≥ 2`).
+* `test_correct`: a passing test makes its input correct.
+
+### Instances
+
+| network | n | V | d = h | certified | bill | length | checked by |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `attn_max2_tiny-v8d4-s1` | 2 | 8 | 4 | 64 | 8,080 | 8,216 | kernel; accepted and scored |
+| `attn_min2_tiny-v8d4-s1` | 2 | 8 | 4 | 64 | 8,080 | 8,216 | kernel; accepted and scored |
+| `attn_max4_tiny-v4d4-s0` | 4 | 4 | 4 | 256 | 16,672 | 16,784 | kernel; accepted and scored |
+| `attn_min4_tiny-v4d4-s0` | 4 | 4 | 4 | 256 | 16,672 | 16,784 | kernel; accepted and scored |
+
+The receipts are in `instances/receipts/PathBrute/`: description size 4,795.
+
+### On the development networks
+
+`lake exe measure_gross --brute` runs the checker, compiled, on the development networks but those
+of 4 positions at `v64` (about 21 billion operations each). Their bill is the formula's: it needs
+only `exp` to accept every score, which entry 6's run on the same networks shows.
+
+| task, size | d = h | bill | length | B / length | certified | this length / entry 7's |
+| --- | --- | --- | --- | --- | --- | --- |
+| max of 2, v64 | 32 | 4,043,776 | 4,052,032 | 8.77 | every correct input, 6 of 6 networks | 1.17 |
+| max of 2, v128 | 32 | 29,285,376 | 29,297,728 | 6.03 | every correct input, 6 of 6 networks | 1.19 |
+| min of 2, v64 | 32 | 4,043,776 | 4,052,032 | 8.77 | every correct input, 6 of 6 networks | 1.17 |
+| min of 2, v128 | 32 | 29,285,376 | 29,297,728 | 6.03 | every correct input, 6 of 6 networks | 1.19 |
+| max of 4, v16 | 8 | 19,697,600 | 19,698,144 | 3.31 | every correct input, 6 of 6 networks | 212 |
+| max of 4, v24 | 12 | 152,733,744 | 152,734,944 | 4.48 | every correct input, 6 of 6 networks | 499 |
+| max of 4, v64 | 32 | 21,141,330,944 | 21,141,339,264 | 10.4 | not run | 3,759 |
+| min of 4, v16 | 8 | 19,697,600 | 19,698,144 | 3.31 | every correct input, 6 of 6 networks | 212 |
+| min of 4, v24 | 12 | 152,733,744 | 152,734,944 | 4.48 | every correct input, 6 of 6 networks | 499 |
+
+* What is proved: the bill and the length (`check_billed`); the counts are measurements.
+* On each of the 48 networks run, it certifies every input the network answers correctly; on the
+  same networks entry 7 leaves out 10 to 1,787 correct inputs at `n = 2` (it certifies 89.1% to
+  99.8% of them) and 75 to 3,981 at `n = 4` (98.0% to 99.9%).
+* At `n = 2` that costs 1.17 to 1.19 times entry 7's length. At `n = 4` the `V^n` inputs dominate:
+  212 (`v16`) to 499 (`v24`) times entry 7's length, and 3,759 times at `v64` by the formula.
+* Against entry 2, the model run on every input: 8,216 against 12,360 on the tiny networks of 2
+  positions, 16,784 against 73,584 on those of 4.
 
 ## Layout
 
@@ -549,9 +732,20 @@ that the proof certifies.
 | `AttnClasses/Runs.lean` | what each part of the checker computes, and what it costs |
 | `AttnClasses/Check.lean` | the whole run on well-formed weights: its count and its bill |
 | `AttnClasses/Sound.lean` | soundness, and the count and the bill |
+| `GrossCubic/Checker.lean` | entry 7's checker |
+| `GrossCubic/Count.lean` | counting inputs: product sets, patterns, the count from comparisons |
+| `GrossCubic/Bound.lean` | from bounds on the softmax's numerator to a correct answer |
+| `GrossCubic/Runs.lean` | what each part of the checker computes, and what it costs |
+| `GrossCubic/Check.lean` | the whole run on well-formed weights: its count and its bill |
+| `GrossCubic/Correct.lean` | the inputs a passing test vouches for are answered correctly |
+| `GrossCubic/Sound.lean` | soundness: the classes, their counts, and the count and the bill |
+| `PathBrute/Checker.lean` | entry 8's checker |
+| `PathBrute/Runs.lean` | what it computes, and what it costs |
+| `PathBrute/Sound.lean` | soundness, and the count and the bill |
 | `instances/` | protected modules, instances, network files, receipts |
 | `Measure.lean` | `lake exe measure`: entry 1's checker on exported networks, compiled |
 | `MeasureAttn.lean` | `lake exe measure_attn`: entry 6's checker on exported attention networks, compiled |
+| `MeasureGross.lean` | `lake exe measure_gross`: entries 7 and 8 on exported attention networks, compiled |
 | `scripts/make_candidate.py` | packages an instance for the acceptance service |
 | `scripts/make_table_instance.py` | writes a kernel-checked instance of entry 1 for a large network |
 | `scripts/column_max_plan.py` | writes entry 5's plan for a max-of-2 network, and runs the checker on it |
@@ -563,11 +757,13 @@ that the proof certifies.
     lake build                  # the entries and the instances; every proof is checked
     lake build measure          # optional: the measuring tools
     lake build measure_attn
+    lake build measure_gross
 
 The `max2-v64-s0` instance takes about 4 minutes and 3 GB. The instances of brute force on the
 attention networks take about 2 minutes (64 forward passes) and 8 minutes (256) each, one
-`decide` per forward pass; everything else takes seconds to a minute. With Mathlib and
-CompactCheck built, the whole library and its instances build in about 17 minutes on two cores.
+`decide` per forward pass; those of entry 8 about a minute each; everything else takes seconds to
+a minute. With Mathlib and CompactCheck built, the whole library and its instances build in about
+30 to 40 minutes on two cores.
 
 ## Submitting an instance to the acceptance service
 
@@ -599,6 +795,8 @@ exporter's claim, not a theorem.
 
 ## Next
 
+* Gross et al.'s sub-cubic proofs: the 100 configurations of their `LargestWrongLogitQuadraticConfig`,
+  as one entry with the configuration as a parameter (in progress).
 * Entry 5 at `V = 64` within the description-size budget: a plan that fits (fewer, larger boxes,
   or a compact encoding of the per-pair choices, decoded by free code), then a kernel-checked
   instance with the tests on the integer table, as entry 1's large instances do.

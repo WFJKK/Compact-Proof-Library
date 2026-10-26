@@ -2,7 +2,7 @@ name = "CompactProofLibrary"
 version = "0.1.0"
 keywords = ["math"]
 defaultTargets = ["Common", "LinearMaxK", "BruteForce", "LinearMaxKPlans", "Symmetry",
-  "LinearMaxKColumnMax", "AttnClasses", "Instances"]
+  "LinearMaxKColumnMax", "AttnClasses", "GrossCubic", "PathBrute", "Instances"]
 
 [leanOptions]
 pp.unicode.fun = true
@@ -40,6 +40,12 @@ name = "LinearMaxKColumnMax"
 [[lean_lib]]
 name = "AttnClasses"
 
+[[lean_lib]]
+name = "GrossCubic"
+
+[[lean_lib]]
+name = "PathBrute"
+
 # The protected modules of the instances, as the acceptance service generates them
 # (CompactCheck's scripts/make_protected.py), so that the instances build here too.
 [[lean_lib]]
@@ -56,7 +62,8 @@ srcDir = "instances"
 # facts otherwise starts a thread per theorem.
 leanOptions = {Elab.async = false}
 globs = ["LinearMaxKInstances.+", "BruteForceInstances.+", "LinearMaxKPlansInstances.+",
-  "SymmetryInstances.+", "LinearMaxKColumnMaxInstances.+", "AttnClassesInstances.+"]
+  "SymmetryInstances.+", "LinearMaxKColumnMaxInstances.+", "AttnClassesInstances.+",
+  "GrossCubicInstances.+", "PathBruteInstances.+"]
 
 # `lake build measure`, then `lake exe measure <network.json> ...`: the checker on exported
 # networks, compiled (not a default target: linking it compiles the Mathlib modules it imports).
@@ -69,3 +76,9 @@ root = "Measure"
 [[lean_exe]]
 name = "measure_attn"
 root = "MeasureAttn"
+
+# `lake build measure_gross`, then `lake exe measure_gross <network.json> ...`: entry 7 on exported
+# attention networks, compiled (not a default target).
+[[lean_exe]]
+name = "measure_gross"
+root = "MeasureGross"
