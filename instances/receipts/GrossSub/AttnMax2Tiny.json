@@ -1,0 +1,294 @@
+{
+ "schema": "open-lane-receipt-v1",
+ "candidate_id": "library-grosssubattnmax2tiny",
+ "status": "accepted",
+ "reason": null,
+ "claim_kind": "performance",
+ "certified_count": 41,
+ "domain_size": 64,
+ "claimed_count": 41,
+ "network": "attn_max2_tiny-v8d4-s1",
+ "theorem": "Candidate.GrossSubAttnMax2Tiny.performance",
+ "statement": null,
+ "axioms": [
+  "propext",
+  "Classical.choice",
+  "Quot.sound"
+ ],
+ "isolation": "landlock",
+ "steps": [
+  {
+   "step": "protected",
+   "module": "Protected.N_attn_max2_tiny_v8d4_s1_c41_ha56fdd20c2259f1f",
+   "cached": true
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.Common.Basic",
+   "rc": 0,
+   "seconds": 5.9,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Ops",
+   "rc": 0,
+   "seconds": 6.0,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Checker",
+   "rc": 0,
+   "seconds": 3.9,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Family",
+   "rc": 0,
+   "seconds": 9.5,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Runs",
+   "rc": 0,
+   "seconds": 12.3,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Check",
+   "rc": 0,
+   "seconds": 4.9,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.AttnClasses.Sound",
+   "rc": 0,
+   "seconds": 12.0,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossCubic.Bound",
+   "rc": 0,
+   "seconds": 4.4,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossCubic.Checker",
+   "rc": 0,
+   "seconds": 5.1,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossCubic.Runs",
+   "rc": 0,
+   "seconds": 14.7,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossCubic.Check",
+   "rc": 0,
+   "seconds": 5.3,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossCubic.Count",
+   "rc": 0,
+   "seconds": 4.7,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossCubic.Correct",
+   "rc": 0,
+   "seconds": 10.0,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossCubic.Sound",
+   "rc": 0,
+   "seconds": 9.4,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSub.Checker",
+   "rc": 0,
+   "seconds": 6.2,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSub.Lin",
+   "rc": 0,
+   "seconds": 5.2,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSub.Psd",
+   "rc": 0,
+   "seconds": 15.2,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSub.Sort",
+   "rc": 0,
+   "seconds": 4.5,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSub.Runs",
+   "rc": 0,
+   "seconds": 15.5,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSub.Err",
+   "rc": 0,
+   "seconds": 8.4,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSub.Spec",
+   "rc": 0,
+   "seconds": 8.5,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSub.Steps",
+   "rc": 0,
+   "seconds": 10.6,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSub.Class",
+   "rc": 0,
+   "seconds": 21.1,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSub.Sound",
+   "rc": 0,
+   "seconds": 5.9,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSub.Check",
+   "rc": 0,
+   "seconds": 13.6,
+   "timed_out": false
+  },
+  {
+   "step": "compile",
+   "module": "Candidate.GrossSubAttnMax2Tiny",
+   "rc": 0,
+   "seconds": 14.6,
+   "timed_out": false
+  },
+  {
+   "step": "kernel",
+   "rc": 0,
+   "seconds": 27.4,
+   "timed_out": false
+  },
+  {
+   "step": "closure",
+   "rc": 0,
+   "seconds": 2.2,
+   "timed_out": false
+  },
+  {
+   "step": "score",
+   "rc": 0,
+   "seconds": 29.7,
+   "timed_out": false
+  }
+ ],
+ "digests": {
+  "commit": "6f369e48e3e487965ef79ec3bb618d277528c1ac",
+  "toolchain": "lean:bf8d54e4714cc4b0",
+  "lean_project": "671f0022d8d94534",
+  "policy": "fd0dc43a87e1d558",
+  "acceptcheck": "d9415be6f14bd994",
+  "modules": {
+   "Candidate.AttnClasses.Check": "3297fd2d8eb0ad503b7c5742ce3c286476f9438e775340bd5fb3a6fa945f2043",
+   "Candidate.AttnClasses.Checker": "9975119beb6fde00faba5f3be80a3e9a651d609bd09c38adbb13d2ea2a121e65",
+   "Candidate.AttnClasses.Family": "6b1b1073b505c8fd33566d98873cc59344fb41b8d6f3f850aea3ae4b1fdfdc1e",
+   "Candidate.AttnClasses.Ops": "d29d7e563104d7576915ff472ab1ce5a8d2a8f88c615cfe5f91972bd16f47bea",
+   "Candidate.AttnClasses.Runs": "53c5a54544d0422b9bbf0fb9da9332de7402937295f4c5dd8d2fb04286fdb4b7",
+   "Candidate.AttnClasses.Sound": "0e31978009afe3c4099c8c27f81328dbda64327479bd8f3ded20312810a71438",
+   "Candidate.Common.Basic": "f6381de3dc68f5819373e2d2588e03e565d0563ee2bb7bfb668e0487be532392",
+   "Candidate.GrossCubic.Bound": "0aaae8cd560bead552e8ca1698a9e456c5554a7b34e8822e67edc6ba1f0e7af8",
+   "Candidate.GrossCubic.Check": "b1938e0fa1e04865ea44ea10007adf4b0c0a63fa288ffaec90e0161aaad64c8b",
+   "Candidate.GrossCubic.Checker": "aa26d3fb7e5cbbfaaa7e39ed730dd3ba59549715cd63dcb8e6442d12f5502002",
+   "Candidate.GrossCubic.Correct": "bf294fe1e8af86fb6a4b80b865462f378a8cfcb0d83d90a7d01cdac3268d7519",
+   "Candidate.GrossCubic.Count": "23bd00507e686a46272aeeb3d7a629bd36f0673fb1cb9df011ec70783746d895",
+   "Candidate.GrossCubic.Runs": "ec61d0599e697d3d4f573a020e6189a617b877e467a955fe998710edbdef6796",
+   "Candidate.GrossCubic.Sound": "e63371e6e12079143a7c99437be298354b64449ca95ecbd8b1076b66ea178d84",
+   "Candidate.GrossSub.Check": "239a55d5a9ea48a4885f54228604e67edc8be9a9db43345568a4fe8e04810087",
+   "Candidate.GrossSub.Checker": "0e28c08928e217c86ee07a426bd5f4e5b0478b61c322536671cee4db4dbe4fda",
+   "Candidate.GrossSub.Class": "ead1b10b3b2ac56d18d297b55a741257b8ac2a048964596d8357fb77ddba597f",
+   "Candidate.GrossSub.Err": "37671d138df26b6113c70bf7e83bfa6b3507f3735468c71814d19df4059a525c",
+   "Candidate.GrossSub.Lin": "635f48e0d91e52ed1ec708a892085c31c83479d0d37148474c153cec9edb771f",
+   "Candidate.GrossSub.Psd": "6f8374895cca271bd39a8b264ec7976b4a0cfd8228996b0288f28ebfd0e13490",
+   "Candidate.GrossSub.Runs": "387b2a9b4cb85f92bfdfd94c9d9618ccfa16ee733eea642c553b43876cbfe44e",
+   "Candidate.GrossSub.Sort": "ea0ba040da76b7229523f8621d8a477cfea154c0d70b25dd8336644d12631a62",
+   "Candidate.GrossSub.Sound": "a0dfc7d4d4520677595d21f22ed22ea806cd70ccf9a91254a5aadefe13fbb08c",
+   "Candidate.GrossSub.Spec": "5d70619b9fd608561c21116fbe424e10ef14f01ca1837493db9780f70dc87e84",
+   "Candidate.GrossSub.Steps": "e046c50b82541c8a42c3ae9929c5d8a07b27d1173c68c624a69c513e54645cff",
+   "Candidate.GrossSubAttnMax2Tiny": "660d9e8963348edc3eb8d011965668d374c4c2d563cfc9ebc06841480e8699d1"
+  },
+  "network_file": "70d7213e17ad8cdee594ff5fc8b1a53b77fc17b741e3a4527cff418e3a44811a"
+ },
+ "score_eligible": false,
+ "execution_assurance": null,
+ "cost_model": "cost-v3",
+ "policy_version": "open-lane-policy-v7",
+ "knowledge": "minimal",
+ "scoring": {
+  "status": "refused",
+  "reason": "the checker's description size 28604 exceeds the budget 8736",
+  "assurance": "kernel_checked_instance",
+  "cost_model": "cost-v3",
+  "bill": null,
+  "extract": 136,
+  "read": 40,
+  "length": null,
+  "description_size": 28604,
+  "size_budget": 8736,
+  "general_kernel_ms": 7850,
+  "general_kernel_budget_ms": 120000,
+  "rest_kernel_ms": 17190,
+  "axioms": [
+   "propext",
+   "Classical.choice",
+   "Quot.sound"
+  ],
+  "closure_visited": 176,
+  "general_constants": 869,
+  "checker_constants": 70
+ },
+ "seconds": 300.9,
+ "time": "2026-10-27T11:59:34+0000",
+ "replayed_constants": 1324,
+ "receipt_path": "/tmp/claude-0/-home-claude/2d9771a9-0505-5fc0-9239-63eac63317da/scratchpad/lib-work/accept-work/receipts/library-grosssubattnmax2tiny-1793102374.json"
+}

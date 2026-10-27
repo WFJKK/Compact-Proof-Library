@@ -43,10 +43,12 @@ length the cost formula gives.
 | 6, `AttnClasses/` | path tables, margins, bounds on `exp`, one test per class of inputs | one-head attention, max or min of `n` tokens, every `n`, `V`, `d`, `h` | none; compare entry 7 |
 | 7, `GrossCubic/` | Gross et al.'s cubic proof: bounds pessimised per query, largest and non-maximal token, worst positions, convexity | one-head attention, as entry 6, with `V, n ≥ 2` | their cubic proof: the same counts on all 54 development networks |
 | 8, `PathBrute/` | every input from the path tables, one test per input and other output | one-head attention, as entry 6 | 01, brute force |
+| 9, `GrossSub/` | Gross et al.'s sub-cubic proofs, any of their 100 configurations: a low-rank part of the scores and a bound on the rest, gaps between the largest token and the others, sorted positional errors, one test per class | one-head attention, as entry 6, with `V, n ≥ 2` | their sub-cubic proofs: at least their count on 2,390 of the 2,400 runs on 24 development networks; on the other 10 their count rests on an unsound step |
 
 Gross et al.'s proofs for Max-of-K on the one-head attention models, from their code (at `fb5b181`):
 their brute force, the model run on every input, is entry 2; their cubic proof is entry 7; their
-sub-cubic proofs are in progress.
+sub-cubic proofs, all 100 configurations, are entry 9. Their importance sampling estimates the
+accuracy from a sample of inputs, a statistical estimate rather than a proof, so it has no entry.
 
 ## Entry 1: linear max-of-k (`LinearMaxK/`)
 
@@ -700,6 +702,163 @@ only `exp` to accept every score, which entry 6's run on the same networks shows
 * Against entry 2, the model run on every input: 8,216 against 12,360 on the tiny networks of 2
   positions, 16,784 against 73,584 on those of 4.
 
+## Entry 9: Gross et al.'s sub-cubic proofs (`GrossSub/`)
+
+### The method
+
+The sub-cubic proofs of Gross et al. for Max-of-K, from their code (`verification/subcubic.py`,
+`quadratic.py` and `LargestWrongLogitQuadraticConfig` in `verification/__init__.py`, at `fb5b181`),
+on entry 6's family with `V, n ≥ 2`, as one checker, `check mx err eu gap`. Their 100
+configurations (5 ways of handling the direct path `EUPU`, 2 of the attention, 10 of the error of
+the attention's low-rank approximation) are two method codes and a certificate. `err` picks one of 6
+checkers for their 10 error methods and `eu` one of 3 for their 5 direct-path methods. The
+certificate holds their directions, mean rows and averages (zeros where a configuration has none),
+and for the `svd` method the numbers that certify its bound. The plan `gap` is their `min_gaps`, by
+ranks. It is code, not certificate: a class counts a concrete multiple of a truth value, so the
+checker must know the multiple.
+
+With a vector `p̄` of the certificate (their mean positional embedding), the score splits as
+
+    S[q, t, p] = EQKE[q, t] + PE[q, p]
+    EQKE[q, t] = c (E_q + P_Q) W_Q · (E_t + p̄) W_K
+    PE[q, p] = c (E_q + P_Q) W_Q · (P_p - p̄) W_K
+
+for every `p̄` (`score_split`). The proof has five steps.
+
+1. `EQKE = Ê + R`, with `Ê` a sum of rank-one terms, and a bound `ε_q` on the spread of row `q` of
+   `R`. Their directions need not be singular vectors: each decomposition is an identity for any
+   directions, with the cross terms kept in `Ê`. By method:
+   * `svd` (`err = 0`): `R = Ar Br`, after one rank-one part on each side. Their bound
+     `√2 σ₁(Ar Br)` is certified. The certificate holds matrices `T`, `F₁`, `F₂` and a number `ε`,
+     and the checker tests that `T Tᵀ - Arᵀ Ar - F₁ F₁ᵀ` and `ε² I - 2 Tᵀ Br Brᵀ T - F₂ F₂ᵀ` have
+     dominant diagonals. Then both remainders are positive semidefinite, and every row of `R`
+     spreads by at most `ε`.
+   * `max_diff`, `mean+max_diff` (1): the same `R = Ar Br`, with their row bound and a mean row `a`
+     of the certificate (zero for `max_diff`): `spread(a Br) + Σ_k |Ar[q, k] - a_k| spread(Br[k])`.
+   * `max_diff_exact` (2): the spread of each row of `Ar Br`, computed.
+   * `exact_EQKE+max_diff_exact` (3): `Ê = EQKE` and `ε = 0`.
+   * the subproduct methods (4): their `decompose_EQKE_error_quadratic`, six rank-one terms and a
+     remainder of four factors, bounded at its three break points (the smallest of three row
+     bounds).
+   * the recursive subproduct methods (5): the same remainder, with the row bounds nested level by
+     level and a mean row at each level (zero where their choice has none).
+2. Take the query `q`, the largest token `m` of rank `λ`, and the other positions holding tokens of
+   rank at most `λ - g`. The query part of every other token's score lies below `m`'s by between
+
+       a_lo = Ê[q, m] - max_(ρ ≤ λ - g) Ê[q, ρ] - ε_q
+       a_hi = Ê[q, m] - min_(ρ ≤ λ - g) Ê[q, ρ] + ε_q
+
+   The positional errors `PE[q, p] - PE[q, Q]` are sorted by a network of `min` and `max`. The
+   attention on `m` is at least what it is with the gap `a_lo` and `m` at the positions where `PE`
+   is smallest, and at most what it is with `a_hi` and `m` where `PE` is largest. The sums of the
+   bounds on `exp` over the `k` smallest and the `k` largest positional errors bound both.
+3. For every other output `j`, `logit_j - logit_m ≤ L_j + α R_j + (1 - α) W + s_q`. Here `α` is
+   the attention on `m`, `R_j = EVOU[m, j] - EVOU[m, m]`, `W` the largest spread of a row of
+   `EVOU` over the ranks up to `λ - g` (here `g` is the smallest of the plan's gaps for `λ` and
+   `c`), `L_j` the direct path's shared part plus the positional path pessimised, and `s_q` the
+   direct path's spread. By `eu`, the direct path is split as a shared row `μ U` and a spread, `μ`
+   from the certificate (0); bounded by the spread of row `q` of `EUPU` (1); or by the spread of
+   the whole table (2).
+4. With `avg` from the certificate and `α = A / (A + B)`, the test at one end of the attention,
+   cleared of the softmax's denominator, is
+
+       A (G0 + (1 - avg)(R* - W)) + B (G0 - avg (R* - W)) < 0
+
+   for `R*` both `R_max` and `R_min`, with `G0 = max_j (L_j + avg R_j) + (1 - avg) W` and `A`, `B`
+   bounded from `exp`. A class passes if the test passes at the end the slopes `R_j - W` call for:
+   the lower end if all are negative, the upper if none is, both otherwise.
+5. A passing class counts its `(λ - g + 1)^c` inputs for each pattern of `c` positions.
+
+Differences from their code, besides exact arithmetic and the counted language's bounds on `exp`:
+
+* Their step 4 is not sound in general. It corrects the average with `R_max` alone, even when
+  `α < avg`; here it takes the larger of the `R_max` and `R_min` terms. And when `R_max ≥ W` it
+  evaluates every output at the upper end, although an output with `R_j < W` decreases in `α`;
+  here both ends, unless the slopes share a sign.
+* Their code counts `(λ - g)^c` inputs of a class, one token short: the class's bounds cover the
+  `λ - g + 1` ranks `0, ..., λ - g`.
+* The `svd` bound is certified by the numbers above instead of computed in floats.
+
+### The theorems
+
+* `check_sound` (`Check.lean`): for every graph of the family, the label `max` or `min`, every
+  method `err`, `eu` and plan `gap`, all weights and all certificates, the count is at most
+  `numCorrect`.
+* `check_billed`: on well-formed weights with `V, n ≥ 2` and a certificate of at least
+  `certNeed err V n d h` numbers, every run that succeeds counts at most `numCorrect` and is billed
+  `subBill err eu gap V n d h`. The bill adds up the tables, step 1 (`errCost`), the sorted
+  positional errors (`sortedCost`), the paths, the direct path (`eupuCost`), the running extrema,
+  and one block per largest rank (`subBlockCost`, which depends on the plan through the classes it
+  lets in). A run fails only where `exp` refuses an argument.
+* `runs_errOut` (`Err.lean`): step 1 for every method, with its bound on `EQKE - Ê` whenever the
+  method's check passes. `spread_le_of_psd` (`Psd.lean`) is the certified `svd` bound, and `sub_eq`
+  (`Lin.lean`) the subproduct identity.
+* `correct_class` (`Class.lean`): every input of a class whose test passed is answered correctly.
+  `blockSum_le` (`Sound.lean`): what a block counts is at most the number of its inputs answered
+  correctly, by entry 7's classes.
+
+### Instances
+
+| instance | network | their configuration: direct path, attention, error | `eu`, `err` | certified | bill | length |
+| --- | --- | --- | --- | --- | --- | --- |
+| `AttnMax2Tiny` | `attn_max2_tiny-v8d4-s1` | `mean_query+max_diff`, `mean_query+diff`, `exact_EQKE+max_diff_exact` | 0, 3 | 41 | 5,666 | 5,842 |
+| `AttnMin2Tiny` | `attn_min2_tiny-v8d4-s1` | `max_diff_exact`, `mean_query+diff`, `exact_EQKE+max_diff_exact` | 1, 3 | 42 | 5,566 | 5,742 |
+| `AttnMin2TinySub` | `attn_min2_tiny-v8d4-s1` | `max_diff_exact`, `mean_query+diff`, `max_diff_subproduct` | 1, 4 | 38 | 7,407 | 7,635 |
+| `AttnMax4Tiny` | `attn_max4_tiny-v4d4-s0` | `max_diff_exact`, `mean_query+diff`, `exact_EQKE+max_diff_exact` | 1, 3 | 234 | 3,538 | 3,690 |
+| `AttnMax4TinySvd` | `attn_max4_tiny-v4d4-s0` | `max_diff_exact`, `drop_average_query_per_output_logit_reasoning`, `svd` | 1, 0 | 134 | 4,246 | 4,455 |
+| `AttnMin4Tiny` | `attn_min4_tiny-v4d4-s0` | `max_diff_exact`, `mean_query+diff`, `exact_EQKE+max_diff_exact` | 1, 3 | 236 | 3,538 | 3,690 |
+| `AttnMin4TinyRec` | `attn_min4_tiny-v4d4-s0` | `max_diff_exact`, `mean_query+diff`, `max_diff_subproduct_recursive` | 1, 5 | 236 | 4,231 | 4,419 |
+
+* What is proved: the certified count and the bill (`D_instance`, kernel-checked, in
+  `instances/GrossSubInstances/`, with the certificates in `instances/certificates/`), and so the
+  length: the bill plus the weights' 136 or 112 entries and the certificate's 40 to 97 numbers, as
+  the open lane counts it. The first row of each network is its best configuration.
+* The acceptance service accepted all seven and refused to score them (receipts in
+  `instances/receipts/GrossSub/`): the checker's description size, 27,603 to 28,608, is more than
+  three times the budget (8,640 at `n = 4`, 8,736 at `n = 2`). Step 1's six methods take about
+  12,500 of it, the tables and steps 2 to 5 about 14,400, and the plan the rest: 1,737 at `V = 8`,
+  `n = 2`, and 736 at `V = 4`, `n = 4`, 10 to 13 for each of its `V² n` entries.
+* On the same networks entry 7 certifies every input, at a length of 7,555 (`n = 2`) and 2,291
+  (`n = 4`).
+
+### On the development networks
+
+`scripts/gross_sub_plan.py` runs their code (`gbmi` at `fb5b181`) on a network and writes each
+configuration's plan and certificate; `lake exe measure_sub` runs the checker on them, compiled.
+The pipeline ran their 100 configurations on the 24 development networks of 4 positions, at `v16`
+and `v24` (`all_proofs_*.json` in `results/gross-cubic-2026-10-16`, in floats); these are the same
+2,400 runs. Every run succeeded: `exp` accepted every argument. Six networks per row; the best
+configuration of a network certifies the most inputs, and `share` is the share of the inputs the
+network answers correctly that it certifies.
+
+| task, size | length of the best configuration | B / length | share: median, lowest | their best: share, median |
+| --- | --- | --- | --- | --- |
+| max of 4, v16 | 52,098 to 59,343 | 1,098 to 1,251 | 79.8%, 75.2% | 67.9% |
+| max of 4, v24 | 127,782 to 143,835 | 4,757 to 5,354 | 81.3%, 78.4% | 74.1% |
+| min of 4, v16 | 51,305 to 52,490 | 1,241 to 1,270 | 76.0%, 70.6% | 68.3% |
+| min of 4, v24 | 121,589 to 128,418 | 5,328 to 5,627 | 82.8%, 78.1% | 75.0% |
+
+* What is proved: the bill and the length (`check_billed`); the counts are measurements. A float
+  reimplementation of the checker, used for the analysis below, gives the same count on every run.
+* The count is at least theirs on 2,390 of the 2,400 runs: higher on 1,913, the same on 477. Where
+  theirs is positive the median change is +12.3%, the largest +39.6%. The two changes to their proof
+  pull in opposite directions: the sound step 4 lowers their count where their step 4 is unsound,
+  and counting all `λ - g + 1` tokens of a class raises it. On the other 10 runs, all on min of 4
+  with the attention's `mean_query+diff`, it is 54 to 4,550 inputs lower (at most 30%): there the
+  inputs their unsound step 4 adds outnumber those the full count adds. On `attn-min4-v16-s1` with
+  `exact_EQKE+max_diff_exact`, for instance, their code certifies 8,102 inputs, 4,727 with step 4
+  made sound, and this checker 5,634.
+* The best configuration handles the attention by `mean_query+diff` on every network, and the error
+  by `exact_EQKE+max_diff_exact` on 17 of them. It certifies 70.6% to 86.0% of the correct inputs
+  (median 80.1%), against a median of 71.7% for their best configuration.
+* The 100 configurations' lengths differ by at most 18% on a network: the tables and the blocks
+  dominate the bill. The shortest certifies a median of 75.3%.
+* Against entries 6 and 7: the best configuration is 0.59 to 0.89 times entry 6's length and 0.40 to
+  0.64 times entry 7's, but they certify medians of 99.6% and 99.4%.
+* The pipeline's estimate of each configuration's length (their own instruction count relative to
+  the cubic proof's, times the pipeline's count of the cubic proof) was 0.80 to 1.29 times this
+  length, median 0.89.
+
 ## Layout
 
 | file | what it is |
@@ -742,14 +901,28 @@ only `exp` to accept every score, which entry 6's run on the same networks shows
 | `PathBrute/Checker.lean` | entry 8's checker |
 | `PathBrute/Runs.lean` | what it computes, and what it costs |
 | `PathBrute/Sound.lean` | soundness, and the count and the bill |
-| `instances/` | protected modules, instances, network files, receipts |
+| `GrossSub/Checker.lean` | entry 9's checker |
+| `GrossSub/Lin.lean` | linear algebra: the decompositions of step 1 are identities, and bounds on the spread of a row of a product |
+| `GrossSub/Psd.lean` | the `svd` method's bound, certified by positive semidefinite matrices with dominant diagonals |
+| `GrossSub/Sort.lean` | sorting: a sorted permutation, and sums over any `k` values between the `k` smallest and the `k` largest |
+| `GrossSub/Spec.lean` | steps 2 to 4 for one input, over the reals |
+| `GrossSub/Runs.lean` | what each part of the checker computes, and what it costs |
+| `GrossSub/Err.lean` | step 1 for every method: its run, and its bound |
+| `GrossSub/Steps.lean` | steps 2 to 5, run: the sorted sums and the test of a class, which call `exp` |
+| `GrossSub/Class.lean` | the inputs of a class whose test passed are answered correctly |
+| `GrossSub/Sound.lean` | what a block counts is at most the inputs of its classes answered correctly |
+| `GrossSub/Check.lean` | the whole run: soundness, the count and the bill |
+| `instances/` | protected modules, instances, network files, certificates, receipts |
 | `Measure.lean` | `lake exe measure`: entry 1's checker on exported networks, compiled |
 | `MeasureAttn.lean` | `lake exe measure_attn`: entry 6's checker on exported attention networks, compiled |
 | `MeasureGross.lean` | `lake exe measure_gross`: entries 7 and 8 on exported attention networks, compiled |
+| `MeasureSub.lean` | `lake exe measure_sub`: entry 9 on exported attention networks with plans, compiled |
 | `scripts/make_candidate.py` | packages an instance for the acceptance service |
 | `scripts/make_table_instance.py` | writes a kernel-checked instance of entry 1 for a large network |
 | `scripts/column_max_plan.py` | writes entry 5's plan for a max-of-2 network, and runs the checker on it |
 | `scripts/make_brute_general_instance.py` | writes a kernel-checked instance of brute force on an attention network, one fact per input |
+| `scripts/gross_sub_plan.py` | runs Gross et al.'s code on a network and writes entry 9's plan and certificate for each configuration |
+| `scripts/make_sub_instance.py` | writes a kernel-checked instance of entry 9 for one configuration |
 
 ## Build
 
@@ -758,12 +931,13 @@ only `exp` to accept every score, which entry 6's run on the same networks shows
     lake build measure          # optional: the measuring tools
     lake build measure_attn
     lake build measure_gross
+    lake build measure_sub
 
 The `max2-v64-s0` instance takes about 4 minutes and 3 GB. The instances of brute force on the
-attention networks take about 2 minutes (64 forward passes) and 8 minutes (256) each, one
-`decide` per forward pass; those of entry 8 about a minute each; everything else takes seconds to
-a minute. With Mathlib and CompactCheck built, the whole library and its instances build in about
-30 to 40 minutes on two cores.
+attention networks take about 2 minutes (64 forward passes) and 8 minutes (256) each, one `decide`
+per forward pass; those of entry 8 about a minute each; those of entry 9 under half a minute each;
+everything else takes seconds to a minute. With Mathlib and CompactCheck built, the whole library
+and its instances build in about 30 to 40 minutes on two cores.
 
 ## Submitting an instance to the acceptance service
 
@@ -776,7 +950,8 @@ The script copies the instance and the library modules it imports under `Candida
 requires, and writes the manifest of a scored submission. The service compiles them in a sandbox,
 replays every constant through the kernel, checks that the checker uses only the counted language,
 and has the kernel accept the soundness theorem and the instance theorem at the statements it builds
-itself. For a network of the zoo, `--model` is the model folder, `models/max2`.
+itself. For a network of the zoo, `--model` is the model folder, `models/max2`. For an instance with
+a certificate (entry 9), `--cert` gives the certificate, the JSON list in `instances/certificates/`.
 
 ## What has to be trusted
 
@@ -791,12 +966,21 @@ weights as exact dyadic rationals, and about the graph the module states. Compac
 models, the 26 operations of `model.py`'s forward pass), and `scripts/make_protected.py` writes the
 module from the file; the acceptance service writes the module itself and checks it against the
 network file with the checker's own reader. That the graph is the network's forward pass is the
-exporter's claim, not a theorem.
+exporter's claim, not a theorem. The certificate in a protected module of entry 9 needs no trust:
+soundness holds for every certificate, so whatever its numbers, the count is at most the number of
+inputs answered correctly.
 
 ## Next
 
-* Gross et al.'s sub-cubic proofs: the 100 configurations of their `LargestWrongLogitQuadraticConfig`,
-  as one entry with the configuration as a parameter (in progress).
+* Entry 9 within the description-size budget. Without the plan the checker's description size is
+  about 26,900: step 1's six methods about 12,500, the tables and steps 2 to 5 about 14,400. The
+  plan costs 10 to 13 for each of its `V² n` entries. The zoo's networks of 4 positions have
+  budgets of 10,368 (`v16`), 12,992 (`v24`) and 41,472 (`v64`): at `v16` and `v24` the tables and
+  steps 2 to 5 alone are over it. At `v64` a checker for one method, with the plan given by its
+  exceptions (on the development networks a median of 91% of their gaps are 1), might fit.
+* Entry 9 on the networks of 2 positions and at `v64`, where the pipeline's run of their code did
+  not finish: `scripts/gross_sub_plan.py` and `lake exe measure_sub` run on any network of the
+  family.
 * Entry 5 at `V = 64` within the description-size budget: a plan that fits (fewer, larger boxes,
   or a compact encoding of the per-pair choices, decoded by free code), then a kernel-checked
   instance with the tests on the integer table, as entry 1's large instances do.

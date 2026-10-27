@@ -2,7 +2,7 @@
 """Package an instance of the library as an open-lane candidate, for the acceptance service.
 
     python3 scripts/make_candidate.py <instance module> <out dir> --model <model> --network <network>
-        --claimed <count> --bill <bill>
+        --claimed <count> --bill <bill> [--cert <certificate.json>]
 
 The acceptance service (scripts/accept.py of the Lean repository Auto-Research-Compact-Proof-in-Lean)
 takes a folder with manifest.json and modules under Candidate/, which may import each other, the
@@ -72,6 +72,8 @@ def main() -> None:
     ap.add_argument("--network", required=True)
     ap.add_argument("--claimed", type=int, required=True)
     ap.add_argument("--bill", type=int, required=True)
+    ap.add_argument("--cert", type=Path, default=None,
+                    help="the certificate of the scored submission (a JSON list of numbers)")
     args = ap.parse_args()
 
     inst = args.instance.resolve()
@@ -118,7 +120,8 @@ def main() -> None:
         "theorem": f"{new_ns}.performance",
         "modules": modules,
         "scored": {"checker": f"{new_ns}.D", "sound": f"{new_ns}.D_sound", "instance": f"{new_ns}.D_instance",
-                   "certificate": [], "claimed_bill": args.bill},
+                   "certificate": json.loads(args.cert.read_text()) if args.cert else [],
+                   "claimed_bill": args.bill},
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1) + "\n")
     print(out)
