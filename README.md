@@ -19,12 +19,15 @@ Mathlib v4.35.0-rc4; every theorem depends on the standard axioms only (`propext
 
 ## Entries and instances
 
-An entry's theorems hold for every size and every choice of weights. They say three things:
+An entry's theorems hold for every size and every choice of weights. They say four things:
 
 * soundness: the checker never certifies more inputs than the network answers correctly;
 * cost: the checker's bill, as a formula in the sizes (and, for entries 3 and 5, the plan; for
   entry 2 on attention networks, the charge of one forward pass, which its instances compute);
-* count: which inputs the checker certifies, as a condition on the weights.
+* count: which inputs the checker certifies, as a condition on the weights;
+* growth: how the bill grows with each size, as two-sided bounds with explicit constants and as
+  Mathlib's `Θ` along `atTop` (each entry's `Asymptotic.lean`; the section
+  [Asymptotics](#asymptotics) compares them with Gross et al.'s).
 
 The cost is the same for every network of the same sizes (and, for entries 3 and 5, the same plan).
 The count is not: two networks of the
@@ -103,6 +106,10 @@ addition, well-formed weights (`WF` in `Family.lean`): `E`, `L` and `U` are pres
   | the constant `k - 1` | `1` |
   | the tests and their gates | `(V - 1) V (V + 3)` |
 
+* `bill_le`, `pow_three_le_bill`, `isTheta_pow_three`, `isTheta_sq_d` (`Asymptotic.lean`):
+  `V³ ≤ 2 bill ≤ 2 (d² + d + 5) V³` for `V ≥ 2`, so the bill is `Θ(V³)` at fixed `d` and
+  `Θ(d²)` at fixed `V`.
+
 The bill does not depend on the values of the weights: the counted language cannot branch on a truth
 value, so the cost is a property of the method. It does not depend on `k` either, while brute force
 (entry 2) grows as `V^k`.
@@ -161,6 +168,8 @@ written once for every graph and every task, and every other entry is measured a
   inputs the single-input rule passes, and the bill is `s` per input.
 * `check_billed_maxK` (`MaxK.lean`): on the linear max-of-k family with well-formed weights, the count
   is exactly `numCorrect` and the bill is `V^k (k d + d² + d V + V - 1)`.
+* `isTheta_pow_succ`, `isTheta_mul_pow` (`Asymptotic.lean`): that bill is `Θ(V^(k + 1))` at fixed
+  `k`, `d`, and `Θ(k V^k)` at fixed `V ≥ 2`, `d ≥ 1`.
 
 `check` bills a forward pass only on graphs of `input`, `sum`, `linear` and `add` nodes
 (`singleCost`); on an attention network it fails. `checkGeneral` (`General.lean`) is the same
@@ -270,6 +279,9 @@ passes with its number of reorderings, `mult V k x`.
   is exactly `numCorrect` and the bill is `(V + k - 1).choose k · (k d + d² + d V + V - 1)`.
 * `countP_perm`, `length_sortedFrom` (`Sorted.lean`): `mult V k x` is the number of reorderings of
   `x`, and there are `(V - lo + k - 1).choose k` sorted inputs with tokens in `[lo, V)`.
+* `pow_succ_le_bill`, `bill_le`, `isTheta_pow_succ` (`Asymptotic.lean`): on the linear max-of-k
+  family the bill is `Θ(V^(k + 1))` at fixed `k`, `d`, like brute force, with the constant `1 / k!`:
+  `V^k ≤ k! C(V + k - 1, k) ≤ k! (k V)^k`.
 
 ### Instances
 
@@ -474,6 +486,11 @@ inputs with several non-maximal tokens by a convexity argument. Here the positio
   forward passes.
 * `eval_attn`, `logit_eq`, `correct_of_bound` (`Family.lean`): the graph's real output is the formula
   above, and a positive sum makes the answer correct.
+* `bill_le`, `pow_three_le_bill`, `isTheta_pow_three`, `isTheta_sq_two`, `isTheta_mul_two_pow`
+  (`Asymptotic.lean`): the classes cost at most `V³ (2^(n - 1) (n + 1) + 9 n + 4)` and, for
+  `n ≥ 3` and `V ≥ 2`, at least `(n - 1) V³`; so the bill is `Θ(V³)` at fixed `n ≥ 3`, `Θ(V²)` at
+  `n = 2` (a class is then one input, and all but the tables cost `O(1)` per input), and
+  `Θ(n 2ⁿ)` at fixed `V ≥ 1`: a class is keyed by a set of positions.
 
 ### Instances
 
@@ -593,6 +610,12 @@ language's bounds on `exp` instead of floats.
   test vouches for are answered correctly. `class_bound`, `classes_le` (`Sound.lean`): what the
   checker counts for a class is at most the number of its inputs answered correctly, and the classes
   are disjoint.
+* `bill_eq`, `bill_le`, `pow_three_le_bill`, `exp_le_bill`, `isTheta_pow_three`,
+  `isTheta_mul_two_pow` (`Asymptotic.lean`): the bill is the tables (`tableCost`, affine in `n` and
+  quadratic in `V`) plus the blocks, which cost at most `V³ (n 2ⁿ + 9 n + 24) + V² (4 n + 14)` and
+  at least `V³` (`V ≥ 2`) and `(n - 3) 2ⁿ V³ / 16`. So the bill is `Θ(V³)` at fixed `n`, `d`, `h`,
+  their cubic, and `Θ(n 2ⁿ)` at fixed `V ≥ 2`, where their `O(n_ctx²)` comes from sorting the
+  positional scores (see [Asymptotics](#asymptotics)).
 
 ### Instances
 
@@ -663,6 +686,9 @@ positional part of the attention; here the scores are the network's own.
   through the head, `(n + 1) V³` for the differences, `4 n V²` for the bounds on `exp`, and
   `5 n (V - 1)` per input (`V ≥ 2`).
 * `test_correct`: a passing test makes its input correct.
+* `bill_eq`, `pow_succ_le_bill`, `bill_le`, `isTheta_pow_succ`, `isTheta_mul_pow`
+  (`Asymptotic.lean`): for `V ≥ 2`, `n ≥ 1` the bill is the tables plus `5 n (V - 1) V^n`, so it
+  is `Θ(V^(n + 1))` at fixed `n ≥ 2` and `Θ(n Vⁿ)` at fixed `V ≥ 2`.
 
 ### Instances
 
@@ -796,6 +822,13 @@ Differences from their code, besides exact arithmetic and the counted language's
 * `correct_class` (`Class.lean`): every input of a class whose test passed is answered correctly.
   `blockSum_le` (`Sound.lean`): what a block counts is at most the number of its inputs answered
   correctly, by entry 7's classes.
+* `subBill_eq`, `tableCost_le`, `errCost_le`, `subBill_le`, `mul_le_subBill`, `sort_le_subBill`,
+  `isTheta_sq`, `isTheta_sq_n` (`Asymptotic.lean`), for every method and every plan: the tables
+  and steps cost `O(V² (d + h) + V (d h + d² + n d + n²) + d³)` (`tableBound`, with step 1's six
+  methods under one bound, `errBound`), the blocks `n V² ≤ Σ ≤ V² (80 n + 10) + 22 n V`. So the
+  bill is `Θ(V²)` at fixed `n`, `d`, `h`, their sub-cubic, and `Θ(n²)` at fixed `V ≥ 1`, the
+  quadratic term being `V (n - 1)(n - 2)` for the sorting networks, a factor `V` below their
+  `d_vocab² n_ctx²`.
 
 ### Instances
 
@@ -859,11 +892,47 @@ network answers correctly that it certifies.
   the cubic proof's, times the pipeline's count of the cubic proof) was 0.80 to 1.29 times this
   length, median 0.89.
 
+## Asymptotics
+
+Every entry's bill is an exact function of the sizes. The modules `*/Asymptotic.lean` read those
+functions: closed forms where the proofs left nested sums (`tableCost`, `bill_eq`), then two-sided
+bounds with explicit constants, then Mathlib's `=Θ[atTop]` for one size growing with the others
+fixed (`Common/Asymptotic.lean` turns bounds on naturals into `Θ` over `ℝ`, and counts the set
+bits of all patterns of `L` positions, `L 2^(L - 1)`, which the attention entries' lower bounds in
+`n` rest on). Against Gross et al.'s Table 1 (`v = d_vocab`, `k = n_ctx`, `d = d_model`):
+
+| proof | Gross et al. | this library, proved | theorems |
+| --- | --- | --- | --- |
+| brute force, entry 2 | `O(v^(k+1) k d)` | `Θ(V^(k+1))` in `V`; `Θ(k V^k)` in `k` (linear family) | `BruteForce.isTheta_pow_succ`, `isTheta_mul_pow` |
+| cubic, entry 7 | `O(v³ k²)` | `Θ(V³)` in `V`; `Θ(n 2ⁿ)` in `n` | `GrossCubic.isTheta_pow_three`, `isTheta_mul_two_pow` |
+| sub-cubic, entry 9 | `O(v² k² + v² d)` | `Θ(V²)` in `V`; `Θ(n²)` in `n`, with the `n²` term `V (n - 1)(n - 2)` | `GrossSub.isTheta_sq`, `isTheta_sq_n` |
+| classes, entry 6 | none | `Θ(V³)` in `V` for `n ≥ 3`, `Θ(V²)` at `n = 2`; `Θ(n 2ⁿ)` in `n` | `AttnClasses.isTheta_pow_three`, `isTheta_sq_two`, `isTheta_mul_two_pow` |
+| path brute force, entry 8 | none | `Θ(V^(n+1))` in `V`; `Θ(n Vⁿ)` in `n` | `PathBrute.isTheta_pow_succ`, `isTheta_mul_pow` |
+| groups, entry 1 | none | `Θ(V³)` in `V`; `Θ(d²)` in `d`; no `k` | `LinearMaxK.isTheta_pow_three`, `isTheta_sq_d` |
+| symmetry, entry 4 | none | `Θ(V^(k+1))` in `V`, constant `1 / k!` | `Symmetry.isTheta_pow_succ` |
+
+* In the vocabulary, the library's versions of their proofs grow as theirs: `V^(n+1)`, `V³`, `V²`.
+* In the context length, entry 7 grows as `n 2ⁿ` where their cubic proof grows as `n²`: `kverd`
+  finds the worst positions of a non-maximal token by trying every pattern of positions, `2^(n - 1)`
+  per test, where their code sorts the positional scores. The verdicts are the same; the bound
+  `(n - 3) 2ⁿ V³ ≤ 16 bill` (`exp_le_bill`) shows the difference is real, not slack in the
+  analysis. At the zoo's `n ≤ 4` it is immaterial (at `V = 64`, `d = h = 32`: 5.62M against 5.53M
+  with sorting); at `n = 10` the patterns cost 12 times the sorted version, at `n = 16` 600 times.
+  Entry 6 has the same growth, built into its classes, which a set of positions keys. Both are
+  exact statements about these checkers; sorting them (entry 9's `sortV`) is the fix, and a new
+  checker.
+* Entry 9's `n²` term is a factor `V` below theirs: the sorting networks run once per query token
+  and each class then costs `O(1)` from prefix sums, `O(n V²)` for all classes.
+* Entry 9's bounds hold for every plan, by taking every class in, and for every one of its 100
+  configurations, by one bound over the six step-1 methods. Entries 3 and 5, whose bills are
+  sums over the terms of a plan, have no asymptotic module: their growth is the plan's.
+
 ## Layout
 
 | file | what it is |
 | --- | --- |
 | `Common/Basic.lean` | sums, and `Runs`: the value and the exact cost of a counted computation |
+| `Common/Asymptotic.lean` | from bounds on naturals to `Θ` over `ℝ`; sums over a range; counting the set bits of all patterns |
 | `LinearMaxK/Family.lean` | the family: graph, well-formed weights, `M = U L E`, logits as sums of columns |
 | `LinearMaxK/Groups.lean` | the groups: their sizes, and the partition of the inputs |
 | `LinearMaxK/Checker.lean` | entry 1's checker, in the counted language |
@@ -871,9 +940,11 @@ network answers correctly that it certifies.
 | `LinearMaxK/Sound.lean` | soundness |
 | `LinearMaxK/Exact.lean` | exactness, completeness, the bill in closed form |
 | `LinearMaxK/Table.lean` | the count from a table of integers, for instances too large for one `decide` |
+| `LinearMaxK/Asymptotic.lean` | the bill's growth: `Θ(V³)`, `Θ(d²)` |
 | `BruteForce/Checker.lean` | entry 2's checker, its soundness and its bill, for every network |
 | `BruteForce/MaxK.lean` | brute force on the linear max-of-k family: exact, and its bill |
 | `BruteForce/General.lean` | brute force with the general single rule, for attention networks: soundness, and the run from one fact per input |
+| `BruteForce/Asymptotic.lean` | the bill's growth on the linear family: `Θ(V^(k + 1))`, `Θ(k V^k)` |
 | `LinearMaxKPlans/Pieces.lean` | pieces of groups: membership, sizes, valid plans |
 | `LinearMaxKPlans/Checker.lean` | entry 3's checker |
 | `LinearMaxKPlans/Runs.lean` | what it computes, and what it costs |
@@ -882,6 +953,7 @@ network answers correctly that it certifies.
 | `Symmetry/Sorted.lean` | sorted inputs, how many there are, and the reorderings of an input |
 | `Symmetry/Checker.lean` | entry 4's checker, its soundness, its count and its bill |
 | `Symmetry/MaxK.lean` | symmetry on the linear max-of-k family: exact, and its bill |
+| `Symmetry/Asymptotic.lean` | the bill's growth: `Θ(V^(k + 1))` with the constant `1 / k!` |
 | `LinearMaxKColumnMax/Checker.lean` | entry 5's plans and checker |
 | `LinearMaxKColumnMax/Runs.lean` | what it computes, and what it costs |
 | `LinearMaxKColumnMax/Sound.lean` | soundness, and the count and the bill |
@@ -891,6 +963,7 @@ network answers correctly that it certifies.
 | `AttnClasses/Runs.lean` | what each part of the checker computes, and what it costs |
 | `AttnClasses/Check.lean` | the whole run on well-formed weights: its count and its bill |
 | `AttnClasses/Sound.lean` | soundness, and the count and the bill |
+| `AttnClasses/Asymptotic.lean` | the bill's growth: `Θ(V³)` for `n ≥ 3`, `Θ(V²)` at `n = 2`, `Θ(n 2ⁿ)` |
 | `GrossCubic/Checker.lean` | entry 7's checker |
 | `GrossCubic/Count.lean` | counting inputs: product sets, patterns, the count from comparisons |
 | `GrossCubic/Bound.lean` | from bounds on the softmax's numerator to a correct answer |
@@ -898,9 +971,11 @@ network answers correctly that it certifies.
 | `GrossCubic/Check.lean` | the whole run on well-formed weights: its count and its bill |
 | `GrossCubic/Correct.lean` | the inputs a passing test vouches for are answered correctly |
 | `GrossCubic/Sound.lean` | soundness: the classes, their counts, and the count and the bill |
+| `GrossCubic/Asymptotic.lean` | the bill read, its closed forms, and its growth: `Θ(V³)`, `Θ(n 2ⁿ)` |
 | `PathBrute/Checker.lean` | entry 8's checker |
 | `PathBrute/Runs.lean` | what it computes, and what it costs |
 | `PathBrute/Sound.lean` | soundness, and the count and the bill |
+| `PathBrute/Asymptotic.lean` | the bill in closed form, and its growth: `Θ(V^(n + 1))`, `Θ(n Vⁿ)` |
 | `GrossSub/Checker.lean` | entry 9's checker |
 | `GrossSub/Lin.lean` | linear algebra: the decompositions of step 1 are identities, and bounds on the spread of a row of a product |
 | `GrossSub/Psd.lean` | the `svd` method's bound, certified by positive semidefinite matrices with dominant diagonals |
@@ -912,6 +987,7 @@ network answers correctly that it certifies.
 | `GrossSub/Class.lean` | the inputs of a class whose test passed are answered correctly |
 | `GrossSub/Sound.lean` | what a block counts is at most the inputs of its classes answered correctly |
 | `GrossSub/Check.lean` | the whole run: soundness, the count and the bill |
+| `GrossSub/Asymptotic.lean` | the bill read, bounds for every method and plan, and its growth: `Θ(V²)`, `Θ(n²)` |
 | `instances/` | protected modules, instances, network files, certificates, receipts |
 | `Measure.lean` | `lake exe measure`: entry 1's checker on exported networks, compiled |
 | `MeasureAttn.lean` | `lake exe measure_attn`: entry 6's checker on exported attention networks, compiled |
@@ -927,7 +1003,7 @@ network answers correctly that it certifies.
 ## Build
 
     lake exe cache get          # Mathlib's prebuilt files
-    lake build                  # the entries and the instances; every proof is checked
+    lake build                  # the entries, their asymptotics and the instances; every proof is checked
     lake build measure          # optional: the measuring tools
     lake build measure_attn
     lake build measure_gross
@@ -972,6 +1048,11 @@ inputs answered correctly.
 
 ## Next
 
+* Entries 7 and 6 with the worst positions of a non-maximal token found by sorting (entry 9's
+  `sortV`, as Gross et al.'s code does) instead of over the `2^(n - 1)` patterns: the same
+  verdicts at `O(n²)` per test, so `Θ(V³ n²)` for entry 7, the growth of their cubic proof
+  (`GrossCubic/Asymptotic.lean`). A new checker, so a new acceptance of its instances; entry 7's
+  description size leaves 240 to 340 of headroom for it.
 * Entry 9 within the description-size budget. Without the plan the checker's description size is
   about 26,900: step 1's six methods about 12,500, the tables and steps 2 to 5 about 14,400. The
   plan costs 10 to 13 for each of its `V² n` entries. The zoo's networks of 4 positions have

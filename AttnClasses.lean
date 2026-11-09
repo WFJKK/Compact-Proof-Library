@@ -4,3 +4,4 @@ import AttnClasses.Family
 import AttnClasses.Runs
 import AttnClasses.Check
 import AttnClasses.Sound
+import AttnClasses.Asymptotic

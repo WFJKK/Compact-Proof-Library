@@ -5,3 +5,4 @@ import GrossCubic.Runs
 import GrossCubic.Check
 import GrossCubic.Correct
 import GrossCubic.Sound
+import GrossCubic.Asymptotic

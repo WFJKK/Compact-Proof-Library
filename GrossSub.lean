@@ -9,3 +9,4 @@ import GrossSub.Steps
 import GrossSub.Class
 import GrossSub.Sound
 import GrossSub.Check
+import GrossSub.Asymptotic

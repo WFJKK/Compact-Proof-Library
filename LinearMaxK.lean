@@ -5,3 +5,4 @@ import LinearMaxK.Runs
 import LinearMaxK.Sound
 import LinearMaxK.Exact
 import LinearMaxK.Table
+import LinearMaxK.Asymptotic
