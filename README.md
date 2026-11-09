@@ -7,11 +7,11 @@ the kernel evaluates the checker on its weights, and the entry's theorems turn t
 proof about that network.
 
 The specification is CompactCheck's, pinned to commit `6f369e4` of
-[Auto-Research-Compact-Proof-in-Lean](https://github.com/WFJKK/Auto-Research-Compact-Proof-in-Lean):
+[Compact-Proof-Checker](https://github.com/WFJKK/Compact-Proof-Checker):
 `Correct` and `numCorrect` in `Spec.lean`, the exact evaluator, and the counted language
 (`CountedOps.lean`, policy v7). A checker reads the shape and the length of a weight for free, and
 has CompactCheck's general single rule `gsingle` for attention networks. Every entry uses only the
-minimal knowledge condition: the base allowlist, none of the legacy lane's rules for groups of
+minimal knowledge condition: the base allowlist, none of the fixed rules lane's rules for groups of
 inputs.
 The entries prove theorems about those definitions, never about copies of them. Lean 4.35.0-rc4,
 Mathlib v4.35.0-rc4; every theorem depends on the standard axioms only (`propext`,
